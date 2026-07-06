@@ -315,7 +315,7 @@ async function runSmokeTest(): Promise<void> {
           await new Promise((resolve) => setTimeout(resolve, 350));
 
           const backgroundImage = getComputedStyle(document.body, '::before').backgroundImage;
-          const topbarBanner = document.querySelector('.topbar-banner');
+          const heroBanner = document.querySelector('.hero-banner img');
           const emptyImage = document.querySelector('.empty-folder-state img');
           const emptyReady = ${JSON.stringify(smokeTestEmptyState)}
             ? emptyImage instanceof HTMLImageElement && emptyImage.src.includes('/ui/empty-files.png')
@@ -331,8 +331,8 @@ async function runSmokeTest(): Promise<void> {
           document.querySelector('[data-action="close-help"]')?.click();
 
           visualAssetsReady = backgroundImage.includes('app-background.png')
-            && topbarBanner instanceof HTMLImageElement
-            && topbarBanner.src.includes('/ui/app-hero-banner.png')
+            && heroBanner instanceof HTMLImageElement
+            && heroBanner.src.includes('/ui/app-hero-banner.png')
             && helpBannerReady
             && emptyReady;
         }
@@ -542,7 +542,7 @@ async function runSmokeTest(): Promise<void> {
           hasHelpPanel: Boolean(document.querySelector('[data-help-panel]')),
           hasAboutPanel: Boolean(document.querySelector('[data-about-panel]')),
           hasFileList: Boolean(document.querySelector('.file-list')),
-          hasTopbarBanner: Boolean(document.querySelector('.topbar-banner')),
+          hasHeroBanner: Boolean(document.querySelector('.hero-banner img')),
           hasEmptyState: Boolean(document.querySelector('.empty-folder-state img')),
           shortcutSmokeDetails: window.__shortcutSmokeDetails ?? null,
           helpText: document.querySelector('[data-help-panel]')?.textContent?.slice(0, 200) ?? '',
