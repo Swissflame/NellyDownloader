@@ -3,6 +3,7 @@ import { app, BrowserWindow, dialog, ipcMain } from "electron/main";
 import type { BrowserWindow as BrowserWindowInstance, OpenDialogOptions } from "electron/main";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
+import { DEFAULT_KEYBOARD_SHORTCUTS } from "../config/shortcuts";
 import type { AppSettings, DownloadProgressEvent, OutputFile, TargetFolderState } from "../types/app";
 import { getAssetPath } from "./assetPaths";
 import { copyTargetFilesToClipboard } from "./fileClipboard";
@@ -23,6 +24,7 @@ const smokeTestHelp = process.env.NELLY_ELECTRON_TEST_HELP === "1";
 const smokeTestClipboardDownload = process.env.NELLY_ELECTRON_TEST_CLIPBOARD_DOWNLOAD === "1";
 const smokeTestClipboardText = process.env.NELLY_ELECTRON_TEST_CLIPBOARD_TEXT;
 const smokeTestAbout = process.env.NELLY_ELECTRON_TEST_ABOUT === "1";
+const smokeTestShortcuts = process.env.NELLY_ELECTRON_TEST_SHORTCUTS === "1";
 const supportedExtensions = new Set(["mp4", "mkv", "webm", "mov", "avi", "mp3", "m4a", "wav", "opus"]);
 const projectRoot = path.resolve(__dirname, "..", "..", "..");
 const windowIconPath = getAssetPath(projectRoot, "icons", "app-icon.ico");
@@ -49,6 +51,7 @@ function getDefaultSettings(): AppSettings {
     ytDlpPath: null,
     ffmpegPath: null,
     ffprobePath: null,
+    keyboardShortcuts: DEFAULT_KEYBOARD_SHORTCUTS,
   };
 }
 
@@ -66,6 +69,10 @@ async function readSettings(): Promise<AppSettings> {
     return {
       ...defaults,
       ...parsedSettings,
+      keyboardShortcuts: {
+        ...defaults.keyboardShortcuts,
+        ...(parsedSettings.keyboardShortcuts ?? {}),
+      },
       targetFolder: typeof parsedSettings.targetFolder === "string" && parsedSettings.targetFolder.trim()
         ? parsedSettings.targetFolder
         : defaults.targetFolder,
@@ -84,6 +91,10 @@ async function writeSettings(settings: AppSettings): Promise<AppSettings> {
   const normalizedSettings: AppSettings = {
     ...getDefaultSettings(),
     ...settings,
+    keyboardShortcuts: {
+      ...getDefaultSettings().keyboardShortcuts,
+      ...settings.keyboardShortcuts,
+    },
   };
 
   await fs.mkdir(app.getPath("userData"), { recursive: true });
@@ -159,6 +170,7 @@ async function runSmokeTest(): Promise<void> {
         let trashReady = true;
         let helpReady = true;
         let aboutReady = true;
+        let shortcutsReady = true;
         let clipboardDownloadReady = true;
         if (${JSON.stringify(smokeTestSettings)}) {
           const changedSettings = await window.nelly.saveSettings({
@@ -291,6 +303,134 @@ async function runSmokeTest(): Promise<void> {
             && aboutText.includes('yt-dlp')
             && aboutText.includes('Zielordner');
         }
+        if (${JSON.stringify(smokeTestShortcuts)}) {
+          document.querySelector('[data-action="close-help"]')?.click();
+          document.querySelector('[data-action="close-settings"]')?.click();
+          document.querySelector('[data-action="close-about"]')?.click();
+          await new Promise((resolve) => setTimeout(resolve, 150));
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'F5', bubbles: true, cancelable: true }));
+          for (let attempt = 0; attempt < 60; attempt += 1) {
+            if (document.querySelector('[data-file-id]')) break;
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
+
+          const fileList = document.querySelector('.file-list');
+          const fileListStyle = fileList instanceof HTMLElement ? getComputedStyle(fileList) : null;
+          const fileListScrollReady = fileList instanceof HTMLElement
+            && fileList.scrollHeight > fileList.clientHeight
+            && fileListStyle !== null
+            && ['auto', 'scroll'].includes(fileListStyle.overflowY);
+
+          const input = document.querySelector('#download-link');
+          if (!(input instanceof HTMLInputElement)) return false;
+          input.value = 'https://example.com/video.mp4';
+          input.focus();
+          input.setSelectionRange(0, input.value.length);
+          input.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', ctrlKey: true, bubbles: true, cancelable: true }));
+          const ctrlAProtectedInput = input.selectionStart === 0 && input.selectionEnd === input.value.length;
+          input.blur();
+
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', ctrlKey: true, bubbles: true, cancelable: true }));
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          const checkedAfterSelectAll = document.querySelectorAll('[data-file-id]:checked').length;
+          const fileCount = document.querySelectorAll('[data-file-id]').length;
+          const selectAllReady = fileCount > 0 && checkedAfterSelectAll === fileCount;
+          const selectedCheckboxes = Array.from(document.querySelectorAll('[data-file-id]:checked'));
+          selectedCheckboxes.slice(1).forEach((checkbox) => {
+            if (checkbox instanceof HTMLInputElement) checkbox.checked = false;
+          });
+
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'c', ctrlKey: true, shiftKey: true, bubbles: true, cancelable: true }));
+          await new Promise((resolve) => setTimeout(resolve, 6000));
+          const copyShortcutToast = document.querySelector('[data-toast]')?.textContent ?? '';
+          const copyShortcutReady = copyShortcutToast.includes('Zwischenablage') || copyShortcutToast.includes('kopiert');
+
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true }));
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          const deleteDialogOpened = document.querySelector('[data-dialog]') instanceof HTMLDialogElement
+            && document.querySelector('[data-dialog]')?.hasAttribute('open')
+            && (document.querySelector('[data-dialog-title]')?.textContent ?? '').includes('Papierkorb');
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          const deleteDialogClosed = !(document.querySelector('[data-dialog]') instanceof HTMLDialogElement
+            && document.querySelector('[data-dialog]')?.hasAttribute('open'));
+
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'F1', bubbles: true, cancelable: true }));
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          const helpOpened = document.querySelector('[data-help-panel]') instanceof HTMLElement;
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          const helpClosed = !document.querySelector('[data-help-panel]');
+
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'i', ctrlKey: true, bubbles: true, cancelable: true }));
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          const aboutOpened = document.querySelector('[data-about-panel]') instanceof HTMLElement;
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          const aboutClosed = !document.querySelector('[data-about-panel]');
+
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: ',', ctrlKey: true, bubbles: true, cancelable: true }));
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          const settingsOpened = document.querySelector('[data-settings-panel]') instanceof HTMLElement;
+          const settingsShortcutsVisible = (document.querySelector('[data-settings-panel]')?.textContent ?? '').includes('Ctrl+Enter');
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          const settingsClosed = !document.querySelector('[data-settings-panel]');
+
+          input.value = '';
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true, cancelable: true }));
+          await new Promise((resolve) => setTimeout(resolve, 150));
+          const ctrlEnterReady = (document.querySelector('.details-panel')?.textContent ?? '').includes('Bitte gib zuerst einen Link ein');
+
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'F5', bubbles: true, cancelable: true }));
+          await new Promise((resolve) => setTimeout(resolve, 250));
+
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'v', ctrlKey: true, shiftKey: true, bubbles: true, cancelable: true }));
+          await new Promise((resolve) => setTimeout(resolve, 250));
+          const clipboardShortcutToast = document.querySelector('[data-toast]')?.textContent ?? '';
+          const clipboardShortcutReady = clipboardShortcutToast.includes('Keine') && clipboardShortcutToast.includes('URL');
+
+          const shortcutSmokeDetails = {
+            fileListScrollReady,
+            ctrlAProtectedInput,
+            selectAllReady,
+            deleteDialogOpened,
+            deleteDialogClosed,
+            copyShortcutReady,
+            helpOpened,
+            helpClosed,
+            aboutOpened,
+            aboutClosed,
+            settingsOpened,
+            settingsShortcutsVisible,
+            settingsClosed,
+            ctrlEnterReady,
+            clipboardShortcutReady,
+            fileCount,
+            checkedAfterSelectAll,
+            fileListClientHeight: fileList instanceof HTMLElement ? fileList.clientHeight : 0,
+            fileListScrollHeight: fileList instanceof HTMLElement ? fileList.scrollHeight : 0,
+            clipboardShortcutToast,
+            copyShortcutToast,
+          };
+          window.__shortcutSmokeDetails = shortcutSmokeDetails;
+
+          shortcutsReady = fileListScrollReady
+            && ctrlAProtectedInput
+            && selectAllReady
+            && copyShortcutReady
+            && deleteDialogOpened
+            && deleteDialogClosed
+            && helpOpened
+            && helpClosed
+            && aboutOpened
+            && aboutClosed
+            && settingsOpened
+            && settingsShortcutsVisible
+            && settingsClosed
+            && ctrlEnterReady
+            && clipboardShortcutReady;
+        }
         if (${JSON.stringify(smokeTestClipboardDownload)}) {
           document.querySelector('[data-action="close-help"]')?.click();
           await new Promise((resolve) => setTimeout(resolve, 150));
@@ -328,6 +468,7 @@ async function runSmokeTest(): Promise<void> {
           && trashReady
           && helpReady
           && aboutReady
+          && shortcutsReady
           && clipboardDownloadReady;
       })()
     `
@@ -347,6 +488,8 @@ async function runSmokeTest(): Promise<void> {
   try {
     if (smokeTestClipboardDownload) {
       clipboard.writeText(smokeTestClipboardText ?? "https://www.tiktok.com/@scout2015/video/6718335390845095173");
+    } else if (smokeTestShortcuts) {
+      clipboard.writeText("kein gueltiger Link");
     }
 
     const testPassed = await mainWindow.webContents.executeJavaScript(testScript);
@@ -362,6 +505,8 @@ async function runSmokeTest(): Promise<void> {
           hasAboutButton: Boolean(document.querySelector('[data-action="about"]')),
           hasHelpPanel: Boolean(document.querySelector('[data-help-panel]')),
           hasAboutPanel: Boolean(document.querySelector('[data-about-panel]')),
+          hasFileList: Boolean(document.querySelector('.file-list')),
+          shortcutSmokeDetails: window.__shortcutSmokeDetails ?? null,
           helpText: document.querySelector('[data-help-panel]')?.textContent?.slice(0, 200) ?? '',
           hasHelpSearch: Boolean(document.querySelector('[data-help-search]')),
           settingsPanel: Boolean(document.querySelector('[data-settings-panel]')),

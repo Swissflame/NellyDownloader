@@ -1,8 +1,14 @@
+import { DEFAULT_KEYBOARD_SHORTCUTS, SHORTCUT_DESCRIPTIONS } from "../config/shortcuts";
+
 export type HelpChapter = {
   id: string;
   title: string;
   body: string[];
   keywords: string[];
+  table?: {
+    headers: [string, string];
+    rows: [string, string][];
+  };
 };
 
 export const helpChapters: HelpChapter[] = [
@@ -66,6 +72,23 @@ export const helpChapters: HelpChapter[] = [
       "Direkt herunterladen vermeidet eine separate Analyse vor dem Download. Es werden keine zwei yt-dlp-Prozesse parallel fuer denselben Link gestartet.",
     ],
     keywords: ["downloadmodus", "automatisch", "direkt", "analysieren"],
+  },
+  {
+    id: "keyboard-shortcuts",
+    title: "Tastenkombinationen",
+    body: [
+      "Shortcuts funktionieren, wenn NellyDownloader aktiv ist.",
+      "Normale Texteingaben werden geschuetzt: Ctrl+A markiert im Linkfeld weiter Text und Delete wirkt nicht im Linkfeld.",
+      "Logitech-Tasten oder andere externe Bediengeraete koennen auf diese Tastenkombinationen gelegt werden.",
+    ],
+    keywords: ["shortcut", "tastenkombination", "logitech", "f1", "delete"],
+    table: {
+      headers: ["Tastenkombination", "Aktion"],
+      rows: SHORTCUT_DESCRIPTIONS.map((shortcut) => [
+        DEFAULT_KEYBOARD_SHORTCUTS[shortcut.action],
+        shortcut.label,
+      ]),
+    },
   },
   {
     id: "whatsapp",

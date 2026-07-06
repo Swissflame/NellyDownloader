@@ -15,6 +15,7 @@ export function renderHelpPanel(visible: boolean, searchQuery: string): string {
       <article class="help-chapter" id="help-${escapeHtml(chapter.id)}">
         <h3>${highlightText(chapter.title, normalizedQuery)}</h3>
         ${chapter.body.map((paragraph) => `<p>${highlightText(paragraph, normalizedQuery)}</p>`).join("")}
+        ${chapter.table ? renderHelpTable(chapter.table, normalizedQuery) : ""}
       </article>
     `).join("")
     : `<div class="folder-message">Keine passenden Hilfethemen gefunden. Versuche ein anderes Stichwort.</div>`;
@@ -57,6 +58,8 @@ function chapterMatches(chapter: typeof helpChapters[number], query: string): bo
     chapter.title,
     ...chapter.body,
     ...chapter.keywords,
+    ...(chapter.table?.headers ?? []),
+    ...(chapter.table?.rows.flat() ?? []),
   ].join(" ").toLowerCase();
 
   return haystack.includes(query);
@@ -75,4 +78,21 @@ function highlightText(text: string, query: string): string {
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function renderHelpTable(table: NonNullable<typeof helpChapters[number]["table"]>, query: string): string {
+  return `
+    <div class="help-table" role="table">
+      <div role="row">
+        <strong role="columnheader">${highlightText(table.headers[0], query)}</strong>
+        <strong role="columnheader">${highlightText(table.headers[1], query)}</strong>
+      </div>
+      ${table.rows.map((row) => `
+        <div role="row">
+          <kbd role="cell">${highlightText(row[0], query)}</kbd>
+          <span role="cell">${highlightText(row[1], query)}</span>
+        </div>
+      `).join("")}
+    </div>
+  `;
 }

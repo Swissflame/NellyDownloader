@@ -41,6 +41,18 @@ export type CookieMode = "auto" | "browser" | "file" | "none";
 export type DownloadMode = "auto" | "analyze-first" | "direct";
 export type WhatsAppCompatibilityMode = "auto" | "always" | "never";
 export type OriginalAfterConversionMode = "keep" | "trash";
+export type ShortcutAction =
+  | "startDownload"
+  | "downloadFromClipboard"
+  | "refreshTargetFolder"
+  | "openSettings"
+  | "openHelp"
+  | "openAbout"
+  | "copySelectedFiles"
+  | "deleteSelectedFiles"
+  | "closeDialog"
+  | "selectAllFiles";
+export type KeyboardShortcuts = Record<ShortcutAction, string>;
 
 export type AppSettings = {
   targetFolder: string;
@@ -54,6 +66,7 @@ export type AppSettings = {
   ytDlpPath: string | null;
   ffmpegPath: string | null;
   ffprobePath: string | null;
+  keyboardShortcuts: KeyboardShortcuts;
 };
 
 export type AppState = {

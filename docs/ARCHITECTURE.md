@@ -37,6 +37,29 @@ Der Hilfe-Bereich ist ein durchsuchbares Handbuch im Renderer. Die Inhalte werde
 
 Die Suche filtert Kapitel nach Titel, Text und Stichworten. Treffer werden im sichtbaren Text markiert. Wenn kein Kapitel passt, zeigt die UI eine freundliche Leermeldung.
 
+## Tastenkombinationen
+
+App-interne Tastenkombinationen werden im Renderer ueber einen zentralen Keydown-Dispatcher verarbeitet. Die Belegung liegt in `src/config/shortcuts.ts` und wird als `keyboardShortcuts` in `AppSettings` vorbereitet.
+
+Shortcuts loesen bestehende Funktionen aus:
+
+- Ctrl+Enter nutzt denselben Downloadworkflow wie der Download-Button
+- Ctrl+Shift+V nutzt denselben Ablauf wie Rechtsklick auf den Download-Button
+- F5 aktualisiert den Zielordner
+- Ctrl+, oeffnet Einstellungen
+- F1 oeffnet Hilfe
+- Ctrl+I oeffnet Info
+- Ctrl+Shift+C nutzt die bestehende Kopierfunktion
+- Delete nutzt die bestehende Papierkorb-Funktion mit Sicherheitsabfrage
+- Esc schliesst offene Dialoge
+- Ctrl+A waehlt Dateien nur aus, wenn keine Texteingabe fokussiert ist
+
+Normale Texteingaben werden geschuetzt. Dadurch koennen externe Bediengeraete wie Logitech-Tasten auf diese Kombinationen gelegt werden, ohne neue Datei- oder Downloadlogik einzufuehren.
+
+## Zielordner-Layout
+
+Der Zielordnerbereich bleibt Teil des Renderers. Die Dateiliste selbst hat eine eigene Maximalhoehe und scrollt intern, damit Link, Analyse, Fortschritt und Dateiaktions-Buttons moeglichst sichtbar bleiben.
+
 ## Assets und Grafiken
 
 Grafiken und Icons liegen zentral im Projektordner `assets/`:

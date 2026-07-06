@@ -1,6 +1,7 @@
 import { renderApp, bindApp } from "./components/app";
 import { showConfirmDialog, showDialog } from "./components/dialog";
 import { DEFAULT_SETTINGS, EMPTY_LINK_DETAILS } from "./config/defaults";
+import { DEFAULT_KEYBOARD_SHORTCUTS } from "./config/shortcuts";
 import { initialState } from "./data/demoState";
 import type {
   AppSettings,
@@ -167,6 +168,10 @@ document.addEventListener("input", (event) => {
   nextSearchInput?.setSelectionRange(nextSearchInput.value.length, nextSearchInput.value.length);
 });
 
+document.addEventListener("keydown", (event) => {
+  void handleKeyboardShortcut(event);
+});
+
 async function handleAction(action: string): Promise<void> {
   switch (action) {
     case "settings":
@@ -214,6 +219,188 @@ async function handleAction(action: string): Promise<void> {
         text: "Diese Funktion wird später umgesetzt.",
       });
   }
+}
+
+async function handleKeyboardShortcut(event: KeyboardEvent): Promise<void> {
+  const shortcut = keyboardEventToShortcut(event);
+  const shortcuts = {
+    ...DEFAULT_KEYBOARD_SHORTCUTS,
+    ...state.settings.keyboardShortcuts,
+  };
+  const targetIsEditable = isEditableTarget(event.target);
+  const modalOpen = hasOpenModal();
+
+  if (shortcut === shortcuts.closeDialog) {
+    if (closeOpenModal()) {
+      event.preventDefault();
+    }
+    return;
+  }
+
+  if (modalOpen) {
+    return;
+  }
+
+  if (shortcut === shortcuts.startDownload) {
+    event.preventDefault();
+    await startDownloadWorkflow(getCurrentLinkInputValue());
+    return;
+  }
+
+  if (shortcut === shortcuts.downloadFromClipboard) {
+    event.preventDefault();
+    await startDownloadFromClipboard();
+    return;
+  }
+
+  if (shortcut === shortcuts.refreshTargetFolder) {
+    event.preventDefault();
+    await refreshTargetFolder();
+    return;
+  }
+
+  if (shortcut === shortcuts.openSettings) {
+    event.preventDefault();
+    state = { ...state, settingsVisible: true };
+    render();
+    return;
+  }
+
+  if (shortcut === shortcuts.openHelp) {
+    event.preventDefault();
+    state = { ...state, helpVisible: true };
+    render();
+    return;
+  }
+
+  if (shortcut === shortcuts.openAbout) {
+    event.preventDefault();
+    state = { ...state, aboutVisible: true };
+    render();
+    return;
+  }
+
+  if (targetIsEditable) {
+    return;
+  }
+
+  if (shortcut === shortcuts.copySelectedFiles) {
+    event.preventDefault();
+    await showFileActionPlaceholder("copy");
+    return;
+  }
+
+  if (shortcut === shortcuts.deleteSelectedFiles) {
+    event.preventDefault();
+    await showFileActionPlaceholder("delete");
+    return;
+  }
+
+  if (shortcut === shortcuts.selectAllFiles) {
+    event.preventDefault();
+    selectAllTargetFiles();
+  }
+}
+
+function keyboardEventToShortcut(event: KeyboardEvent): string {
+  const parts: string[] = [];
+
+  if (event.ctrlKey) {
+    parts.push("Ctrl");
+  }
+
+  if (event.shiftKey) {
+    parts.push("Shift");
+  }
+
+  if (event.altKey) {
+    parts.push("Alt");
+  }
+
+  parts.push(normalizeShortcutKey(event.key));
+
+  return parts.join("+");
+}
+
+function normalizeShortcutKey(key: string): string {
+  if (key === "Escape") {
+    return "Esc";
+  }
+
+  if (key.length === 1) {
+    return key.toUpperCase();
+  }
+
+  return key;
+}
+
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  if (target.isContentEditable) {
+    return true;
+  }
+
+  if (target instanceof HTMLInputElement) {
+    return ["email", "number", "password", "search", "tel", "text", "url"].includes(target.type);
+  }
+
+  return target instanceof HTMLTextAreaElement
+    || target instanceof HTMLSelectElement;
+}
+
+function hasOpenModal(): boolean {
+  const dialog = document.querySelector<HTMLDialogElement>("[data-dialog]");
+
+  return Boolean(dialog?.open || state.settingsVisible || state.helpVisible || state.aboutVisible);
+}
+
+function closeOpenModal(): boolean {
+  const dialog = document.querySelector<HTMLDialogElement>("[data-dialog]");
+
+  if (dialog?.open) {
+    dialog.close("cancel");
+    return true;
+  }
+
+  if (state.aboutVisible) {
+    state = { ...state, aboutVisible: false };
+    render();
+    return true;
+  }
+
+  if (state.helpVisible) {
+    state = { ...state, helpVisible: false, helpSearch: "" };
+    render();
+    return true;
+  }
+
+  if (state.settingsVisible) {
+    state = { ...state, settingsVisible: false };
+    render();
+    return true;
+  }
+
+  return false;
+}
+
+function selectAllTargetFiles(): void {
+  const checkboxes = Array.from(document.querySelectorAll<HTMLInputElement>("[data-file-id]"));
+
+  if (checkboxes.length === 0) {
+    showToast("Keine Dateien im Zielordner.");
+    return;
+  }
+
+  for (const checkbox of checkboxes) {
+    checkbox.checked = true;
+  }
+}
+
+function getCurrentLinkInputValue(): string {
+  return document.querySelector<HTMLInputElement>("#download-link")?.value ?? state.linkInput;
 }
 
 async function saveCurrentSettings(): Promise<void> {
@@ -368,6 +555,11 @@ document.addEventListener("nelly:placeholder-action", (event) => {
 });
 
 async function startDownloadFromClipboard(): Promise<void> {
+  if (state.downloadInProgress || state.analysisInProgress) {
+    showToast("Es laeuft bereits ein Vorgang.");
+    return;
+  }
+
   try {
     const clipboardText = await localApi.readClipboardText();
     const url = findFirstValidHttpUrl(clipboardText);
@@ -468,6 +660,11 @@ async function analyzeLink(url: string): Promise<AnalyzeLinkResult | null> {
 }
 
 async function startDownloadWorkflow(url: string): Promise<void> {
+  if (state.downloadInProgress || state.analysisInProgress) {
+    showToast("Es laeuft bereits ein Vorgang.");
+    return;
+  }
+
   const trimmedUrl = url.trim();
 
   if (!trimmedUrl) {

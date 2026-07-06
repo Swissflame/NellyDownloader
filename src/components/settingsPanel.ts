@@ -1,4 +1,5 @@
 import type { AppSettings } from "../types/app";
+import { SHORTCUT_DESCRIPTIONS } from "../config/shortcuts";
 import { escapeHtml } from "../utils/html";
 
 export function renderSettingsPanel(settings: AppSettings, visible: boolean): string {
@@ -53,6 +54,18 @@ export function renderSettingsPanel(settings: AppSettings, visible: boolean): st
           <div><dt>yt-dlp</dt><dd>${escapeHtml(settings.ytDlpPath ?? "Automatisch suchen")}</dd></div>
         </dl>
         <p class="settings-note">Einstellungen werden automatisch in der lokalen App-Konfiguration gespeichert.</p>
+        <section class="shortcut-settings" aria-labelledby="shortcut-settings-heading">
+          <h3 id="shortcut-settings-heading">Tastenkombinationen</h3>
+          <p class="field-note">Die Standardbelegung ist vorbereitet und wird mit den Einstellungen gespeichert. Freie Bearbeitung folgt spaeter.</p>
+          <div class="shortcut-list" role="table" aria-label="Tastenkombinationen">
+            ${SHORTCUT_DESCRIPTIONS.map((shortcut) => `
+              <div role="row">
+                <span role="cell">${escapeHtml(shortcut.label)}</span>
+                <kbd role="cell">${escapeHtml(settings.keyboardShortcuts[shortcut.action])}</kbd>
+              </div>
+            `).join("")}
+          </div>
+        </section>
         <div class="settings-actions">
           <button class="secondary-button" type="button" data-action="select-target-folder">Zielordner auswählen</button>
           <button class="primary-button" type="button" data-action="save-settings">Speichern</button>

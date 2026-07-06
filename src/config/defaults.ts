@@ -1,4 +1,5 @@
 import type { AppSettings, DownloadProgress, LinkDetails } from "../types/app";
+import { DEFAULT_KEYBOARD_SHORTCUTS } from "./shortcuts";
 
 export const APP_NAME = "Nelly Downloader";
 
@@ -14,6 +15,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   ytDlpPath: null,
   ffmpegPath: null,
   ffprobePath: null,
+  keyboardShortcuts: DEFAULT_KEYBOARD_SHORTCUTS,
 };
 
 export const EMPTY_LINK_DETAILS: LinkDetails = {

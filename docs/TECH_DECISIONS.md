@@ -141,3 +141,22 @@ Begruendung:
 - der Renderer kann Assets ueber Vites `publicDir` verwenden, ohne Dateien nach `src/` zu kopieren
 - der Electron Main-Prozess nutzt eine Asset-Pfad-Hilfe statt hart codierter absoluter Pfade
 - Installer-Assets sind vorbereitet, aber noch nicht in einen Installer-Build eingebunden
+
+## Entscheidung 14: Shortcuts im Renderer statt neue Logik
+
+Begruendung:
+
+- Tastenkombinationen sollen exakt bestehende Button- und Rechtsklick-Aktionen ausloesen
+- Download-, yt-dlp-, ffmpeg- und Dateioperationslogik bleiben unveraendert
+- Texteingaben werden geschuetzt, damit Ctrl+A und Delete in Feldern nicht zweckentfremdet werden
+- die Belegung wird in `AppSettings` vorbereitet und in den Einstellungen angezeigt
+- externe Bediengeraete koennen auf die Shortcuts gelegt werden, ohne eigene Integrationslogik
+
+## Entscheidung 15: Separate Scrollflaeche fuer die Dateiliste
+
+Begruendung:
+
+- bei vielen Zielordner-Dateien bleibt das App-Fenster stabiler
+- Link-, Analyse- und Fortschrittsbereiche bleiben leichter sichtbar
+- Kopieren- und Papierkorb-Buttons bleiben unter der Liste erreichbar
+- die Aenderung betrifft nur Layout/CSS und keine Dateioperationen
