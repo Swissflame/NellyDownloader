@@ -10,7 +10,10 @@ const electronApi: ElectronApi = {
   listTargetFolder: () => ipcRenderer.invoke("folder:list-target"),
   copySelectedFiles: (fileIds: string[]) => ipcRenderer.invoke("files:copy-selected", fileIds),
   deleteSelectedFiles: (fileIds: string[]) => ipcRenderer.invoke("files:delete-selected", fileIds),
-  analyzeLink: (url: string) => ipcRenderer.invoke("link:analyze", url),
+  analyzeLink: (url: string) => {
+    console.log("analyzeLink aufgerufen");
+    return ipcRenderer.invoke("link:analyze", url);
+  },
   startDownload: (url: string) => ipcRenderer.invoke("download:start", url),
 };
 

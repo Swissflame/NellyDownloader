@@ -21,6 +21,7 @@ export function renderSettingsPanel(settings: AppSettings, visible: boolean): st
           <div><dt>Browser</dt><dd>${escapeHtml(settings.browser)}</dd></div>
           <div><dt>Cookie-Modus</dt><dd>${escapeHtml(settings.cookieMode)}</dd></div>
           <div><dt>WhatsApp-Ausgabe</dt><dd>${settings.whatsappCompatibleOutput ? "Aktiv" : "Inaktiv"}</dd></div>
+          <div><dt>yt-dlp</dt><dd>${escapeHtml(settings.ytDlpPath ?? "Automatisch suchen")}</dd></div>
         </dl>
         <p class="settings-note">Einstellungen werden automatisch in der lokalen App-Konfiguration gespeichert.</p>
         <div class="settings-actions">

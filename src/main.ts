@@ -1,6 +1,6 @@
 import { renderApp, bindApp } from "./components/app";
 import { showDialog } from "./components/dialog";
-import { DEFAULT_SETTINGS } from "./config/defaults";
+import { DEFAULT_SETTINGS, EMPTY_LINK_DETAILS } from "./config/defaults";
 import { initialState } from "./data/demoState";
 import type { AppSettings, AppState, TargetFolderState } from "./types/app";
 import type { ElectronApi } from "./types/electronApi";
@@ -203,18 +203,63 @@ function getSelectedFileIds(): string[] {
 }
 
 document.addEventListener("nelly:placeholder-action", (event) => {
-  const placeholderEvent = event as CustomEvent<{ action: string }>;
-  const status = document.querySelector<HTMLElement>("[data-status]");
+  const placeholderEvent = event as CustomEvent<{ action: string; url?: string }>;
 
-  if (placeholderEvent.detail.action === "download" && status) {
-    status.textContent = "Download-Funktion noch nicht eingebaut";
+  if (placeholderEvent.detail.action === "analyze") {
+    void analyzeLink(placeholderEvent.detail.url ?? "");
+  }
+});
+
+async function analyzeLink(url: string): Promise<void> {
+  const trimmedUrl = url.trim();
+  console.log("Analyse gestartet", trimmedUrl);
+
+  state = {
+    ...state,
+    linkInput: trimmedUrl,
+    analysisInProgress: true,
+    progress: {
+      ...state.progress,
+      status: "Link wird analysiert...",
+    },
+    linkDetails: {
+      ...EMPTY_LINK_DETAILS,
+      platform: "Analysiere...",
+      cookiesHint: "yt-dlp liest gerade nur Metadaten. Es wird nichts heruntergeladen.",
+    },
+  };
+  render();
+
+  try {
+    const details = await localApi.analyzeLink(trimmedUrl);
+
+    state = {
+      ...state,
+      linkInput: details.url,
+      linkDetails: details,
+      analysisInProgress: false,
+      progress: {
+        ...state.progress,
+        status: "Analyse abgeschlossen",
+      },
+    };
+  } catch (error) {
+    state = {
+      ...state,
+      analysisInProgress: false,
+      linkDetails: {
+        ...EMPTY_LINK_DETAILS,
+        error: error instanceof Error ? error.message : "Die Link-Analyse ist fehlgeschlagen.",
+      },
+      progress: {
+        ...state.progress,
+        status: "Analyse fehlgeschlagen",
+      },
+    };
   }
 
-  showDialog({
-    title: "Download noch nicht aktiv",
-    text: "Das Grundgerüst startet bereits. Die echte Download-Funktion folgt in einem späteren Schritt.",
-  });
-});
+  render();
+}
 
 function createFallbackApi(): ElectronApi {
   let memorySettings: AppSettings = DEFAULT_SETTINGS;
@@ -254,14 +299,16 @@ function createFallbackApi(): ElectronApi {
     }),
     analyzeLink: async (url) => ({
       url,
-      platform: "Noch nicht analysiert",
+      platform: "Browser-Vorschau",
       title: "-",
       creator: "-",
       videoId: "-",
       duration: "-",
       thumbnailLabel: "Vorschau",
+      thumbnailUrl: null,
       expectedOutput: "MP4, H.264 bevorzugt",
-      cookiesHint: "Analyse ist vorbereitet, ruft aber noch kein yt-dlp auf.",
+      cookiesHint: "Die echte yt-dlp-Analyse ist nur in der Electron-App verfügbar.",
+      error: null,
     }),
     startDownload: async (url) => ({
       started: false,

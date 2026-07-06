@@ -3,12 +3,15 @@ import type { BrowserWindow as BrowserWindowInstance, OpenDialogOptions } from "
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import type { AppSettings, OutputFile, TargetFolderState } from "../types/app";
+import { analyzeLinkWithYtDlp } from "./ytDlpAnalysis";
 
 const devServerUrl = process.env.NELLY_ELECTRON_DEV_URL;
 const isSmokeTest = process.env.NELLY_ELECTRON_SMOKE_TEST === "1";
 const smokeTestTargetFolder = process.env.NELLY_ELECTRON_TEST_TARGET_FOLDER;
 const smokeTestUserData = process.env.NELLY_ELECTRON_TEST_USER_DATA;
+const smokeTestAnalyzeUrl = process.env.NELLY_ELECTRON_TEST_ANALYZE_URL;
 const supportedExtensions = new Set(["mp4", "mkv", "webm", "mov", "avi", "mp3", "m4a", "wav", "opus"]);
+const projectRoot = path.resolve(__dirname, "..", "..", "..");
 
 if (smokeTestUserData) {
   app.setPath("userData", smokeTestUserData);
@@ -23,6 +26,7 @@ function getDefaultSettings(): AppSettings {
     whatsappCompatibleOutput: true,
     cookieMode: "auto",
     browser: "Automatisch",
+    ytDlpPath: null,
   };
 }
 
@@ -112,6 +116,10 @@ async function runSmokeTest(): Promise<void> {
   const testScript = smokeTestTargetFolder
     ? `
       (async () => {
+        for (let attempt = 0; attempt < 100; attempt += 1) {
+          if (typeof window.nelly === 'object' && document.querySelector('[data-action="settings"]')) break;
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
         const apiReady = typeof window.nelly === 'object' && typeof window.nelly.getAppVersion === 'function';
         if (!apiReady) return false;
         document.querySelector('[data-action="settings"]')?.click();
@@ -121,15 +129,35 @@ async function runSmokeTest(): Promise<void> {
         const saved = await window.nelly.saveSettings({ ...settings, targetFolder: ${JSON.stringify(smokeTestTargetFolder)} });
         const reloadedSettings = await window.nelly.getSettings();
         const folder = await window.nelly.listTargetFolder();
+        let analysisReady = true;
+        if (${JSON.stringify(Boolean(smokeTestAnalyzeUrl))}) {
+          document.querySelector('[data-action="close-settings"]')?.click();
+          const input = document.querySelector('#download-link');
+          if (!(input instanceof HTMLInputElement)) return false;
+          input.value = ${JSON.stringify(smokeTestAnalyzeUrl ?? "")};
+          document.querySelector('.link-form')?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+          for (let attempt = 0; attempt < 240; attempt += 1) {
+            const detailsText = document.querySelector('.details-panel')?.textContent ?? '';
+            if (detailsText.includes('Analyse abgeschlossen') || detailsText.includes('Rick Astley') || detailsText.includes('Youtube')) break;
+            await new Promise((resolve) => setTimeout(resolve, 250));
+          }
+          const detailsText = document.querySelector('.details-panel')?.textContent ?? '';
+          analysisReady = detailsText.includes('Rick Astley') || detailsText.includes('Youtube');
+        }
         return settingsPanelVisible
           && saved.saved === true
           && reloadedSettings.targetFolder === ${JSON.stringify(smokeTestTargetFolder)}
           && folder.folderExists === true
-          && folder.files.some((file) => file.name === "electron-test.mp4");
+          && folder.files.some((file) => file.name === "electron-test.mp4")
+          && analysisReady;
       })()
     `
     : `
-      (() => {
+      (async () => {
+        for (let attempt = 0; attempt < 100; attempt += 1) {
+          if (typeof window.nelly === 'object' && document.querySelector('[data-action="settings"]')) break;
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
         const apiReady = typeof window.nelly === 'object' && typeof window.nelly.getAppVersion === 'function';
         document.querySelector('[data-action="settings"]')?.click();
         const settingsPanel = document.querySelector('[data-settings-panel]');
@@ -141,8 +169,17 @@ async function runSmokeTest(): Promise<void> {
     const testPassed = await mainWindow.webContents.executeJavaScript(testScript);
 
     if (testPassed) {
-      mainWindow.close();
+      app.exit(0);
     } else {
+      const diagnostics = await mainWindow.webContents.executeJavaScript(`
+        JSON.stringify({
+          hasNelly: typeof window.nelly,
+          hasSettingsButton: Boolean(document.querySelector('[data-action="settings"]')),
+          detailsText: document.querySelector('.details-panel')?.textContent ?? '',
+          bodyText: document.body.innerText.slice(0, 200)
+        })
+      `);
+      console.error(`Electron-Smoke-Test fehlgeschlagen: ${diagnostics}`);
       app.exit(1);
     }
   } catch (error) {
@@ -294,17 +331,17 @@ function registerIpc(): void {
     message: "Löschen ist noch deaktiviert und führt keine Dateiaktion aus.",
   }));
 
-  ipcMain.handle("link:analyze", (_event, url: string) => ({
-    url,
-    platform: "Noch nicht analysiert",
-    title: "-",
-    creator: "-",
-    videoId: "-",
-    duration: "-",
-    thumbnailLabel: "Vorschau",
-    expectedOutput: "MP4, H.264 bevorzugt",
-    cookiesHint: "Analyse ist vorbereitet, ruft aber noch kein yt-dlp auf.",
-  }));
+  ipcMain.handle("link:analyze", async (_event, url: string) => {
+    console.log("analyzeLink IPC aufgerufen");
+    const settings = await readSettings();
+
+    try {
+      return await analyzeLinkWithYtDlp(url, settings, projectRoot);
+    } catch (error) {
+      console.error("yt-dlp Analyse fehlgeschlagen", error);
+      throw error;
+    }
+  });
 
   ipcMain.handle("download:start", (_event, url: string) => ({
     started: false,

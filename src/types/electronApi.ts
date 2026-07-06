@@ -26,6 +26,10 @@ export type StartDownloadResult = PlaceholderResult & {
   url: string;
 };
 
+export type AnalyzeLinkResult = LinkDetails & {
+  url: string;
+};
+
 export type ElectronApi = {
   getAppVersion: () => Promise<string>;
   getSettings: () => Promise<AppSettings>;
@@ -34,6 +38,6 @@ export type ElectronApi = {
   listTargetFolder: () => Promise<TargetFolderState>;
   copySelectedFiles: (fileIds: string[]) => Promise<FileActionResult>;
   deleteSelectedFiles: (fileIds: string[]) => Promise<FileActionResult>;
-  analyzeLink: (url: string) => Promise<LinkDetails & { url: string }>;
+  analyzeLink: (url: string) => Promise<AnalyzeLinkResult>;
   startDownload: (url: string) => Promise<StartDownloadResult>;
 };

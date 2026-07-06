@@ -45,6 +45,7 @@ Aufgaben:
 - Einstellungen in `app.getPath("userData")/settings.json` speichern
 - Zielordner ueber nativen Electron-Dialog auswaehlen
 - Zielordnerinhalt lesen und als sichere Daten an den Renderer geben
+- Link-Metadaten mit `yt-dlp` analysieren
 - spaeter weitere lokale Betriebssystemfunktionen kapseln
 - spaeter externe Tools wie `yt-dlp`, `ffmpeg` und `ffprobe` starten
 
@@ -75,7 +76,28 @@ API-Methoden:
 - `analyzeLink(url)`
 - `startDownload(url)`
 
-`getSettings`, `saveSettings`, `selectTargetFolder` und `listTargetFolder` arbeiten bereits lokal. `copySelectedFiles`, `deleteSelectedFiles`, `analyzeLink` und `startDownload` sind absichtlich noch sichere Platzhalter.
+`getSettings`, `saveSettings`, `selectTargetFolder`, `listTargetFolder` und `analyzeLink` arbeiten bereits lokal. `copySelectedFiles`, `deleteSelectedFiles` und `startDownload` sind absichtlich noch sichere Platzhalter.
+
+## Link-Analyse
+
+Die Link-Analyse laeuft im Electron Main-Prozess. Der Renderer uebergibt nur die URL ueber `window.nelly.analyzeLink(url)`.
+
+Sicherheitsregeln:
+
+- nur `http://` und `https://` URLs werden akzeptiert
+- `yt-dlp` wird mit `spawn` ohne Shell gestartet
+- es wird nur der Info-Modus verwendet: `--dump-json --no-playlist --skip-download`
+- es werden keine Mediendateien heruntergeladen
+- es werden keine Dateien im Zielordner erzeugt
+- die Analyse hat ein Timeout von 60 Sekunden
+
+`yt-dlp` wird in dieser Reihenfolge gesucht:
+
+1. gespeicherter Pfad aus den Einstellungen
+2. unter Windows die Entwicklungsreferenz `reference/Windows/yt-dlp.exe`
+3. `yt-dlp` oder `yt-dlp.exe` aus dem `PATH`
+
+`reference/` wird dabei nur gelesen und nicht veraendert.
 
 ## Zielordnerzugriff
 
@@ -104,7 +126,7 @@ Der spaetere Download-Workflow bleibt unveraendert als Zielbild:
 1. Link wird eingegeben
 2. Link-Analyse mit `yt-dlp` JSON
 3. Details werden angezeigt
-4. Benutzer startet Download
+4. Benutzer startet spaeter den Download
 5. Zielordner wird geoeffnet oder aktualisiert
 6. Falls WhatsApp aktiv:
    - Download in Temp
@@ -115,6 +137,8 @@ Der spaetere Download-Workflow bleibt unveraendert als Zielbild:
 7. Falls WhatsApp aus:
    - direkter Download in Zielordner
 8. Dateiliste aktualisieren
+
+Der eigentliche Download ist aktuell noch nicht aktiv.
 
 ## Konfiguration
 

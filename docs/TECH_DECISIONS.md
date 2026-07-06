@@ -58,6 +58,13 @@ Begruendung:
 - eigene Implementierung waere unverhaeltnismaessig
 - Electron Main kann spaeter den Prozessstart kapseln
 
+Aktueller Stand:
+
+- `yt-dlp` wird bereits fuer Link-Metadaten genutzt
+- Aufruf nur mit `--dump-json --no-playlist --skip-download`
+- keine Downloads und keine Zielordner-Schreibzugriffe
+- Suche ueber gespeicherten Pfad, Windows-Referenzdatei und `PATH`
+
 ## Entscheidung 7: WhatsApp-Ausgabe ueber Temp
 
 Begruendung:

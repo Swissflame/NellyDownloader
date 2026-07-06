@@ -1,6 +1,9 @@
 import { escapeHtml } from "../utils/html";
 
-export function renderLinkInput(linkInput: string): string {
+export function renderLinkInput(linkInput: string, disabled: boolean): string {
+  const disabledAttribute = disabled ? "disabled" : "";
+  const buttonText = disabled ? "Analysiere..." : "Download starten";
+
   return `
     <section class="link-panel" aria-labelledby="link-heading">
       <div>
@@ -9,8 +12,8 @@ export function renderLinkInput(linkInput: string): string {
       </div>
       <form class="link-form">
         <label class="visually-hidden" for="download-link">Link eingeben</label>
-        <input id="download-link" name="download-link" type="url" value="${escapeHtml(linkInput)}" placeholder="https://..." autocomplete="off" />
-        <button class="primary-button" type="submit">Download starten</button>
+        <input id="download-link" name="download-link" type="url" value="${escapeHtml(linkInput)}" placeholder="https://..." autocomplete="off" ${disabledAttribute} />
+        <button class="primary-button" type="submit" ${disabledAttribute}>${buttonText}</button>
       </form>
     </section>
   `;
@@ -19,10 +22,15 @@ export function renderLinkInput(linkInput: string): string {
 export function bindLinkInput(): void {
   document.querySelector<HTMLFormElement>(".link-form")?.addEventListener("submit", (event) => {
     event.preventDefault();
+
+    const form = event.currentTarget as HTMLFormElement;
+    const linkInput = form.querySelector<HTMLInputElement>("#download-link");
+
     document.dispatchEvent(
       new CustomEvent("nelly:placeholder-action", {
         detail: {
-          action: "download",
+          action: "analyze",
+          url: linkInput?.value ?? "",
         },
       }),
     );

@@ -5,8 +5,10 @@ export type LinkDetails = {
   videoId: string;
   duration: string;
   thumbnailLabel: string;
+  thumbnailUrl: string | null;
   expectedOutput: string;
   cookiesHint: string;
+  error: string | null;
 };
 
 export type DownloadProgress = {
@@ -39,6 +41,7 @@ export type AppSettings = {
   whatsappCompatibleOutput: boolean;
   cookieMode: CookieMode;
   browser: string;
+  ytDlpPath: string | null;
 };
 
 export type AppState = {
@@ -48,6 +51,7 @@ export type AppState = {
   targetFolder: TargetFolderState;
   settings: AppSettings;
   settingsVisible: boolean;
+  analysisInProgress: boolean;
 };
 
 export type DialogMessage = {

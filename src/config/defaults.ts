@@ -8,6 +8,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   whatsappCompatibleOutput: true,
   cookieMode: "auto",
   browser: "Automatisch",
+  ytDlpPath: null,
 };
 
 export const EMPTY_LINK_DETAILS: LinkDetails = {
@@ -17,8 +18,10 @@ export const EMPTY_LINK_DETAILS: LinkDetails = {
   videoId: "-",
   duration: "-",
   thumbnailLabel: "Vorschau",
+  thumbnailUrl: null,
   expectedOutput: DEFAULT_SETTINGS.preferredFormat,
   cookiesHint: "Wird später bei der Link-Analyse erkannt",
+  error: null,
 };
 
 export const IDLE_PROGRESS: DownloadProgress = {
