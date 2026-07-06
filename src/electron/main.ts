@@ -316,6 +316,8 @@ async function runSmokeTest(): Promise<void> {
 
           const backgroundImage = getComputedStyle(document.body, '::before').backgroundImage;
           const heroBanner = document.querySelector('.hero-banner img');
+          const pageDoesNotScroll = document.documentElement.scrollHeight <= document.documentElement.clientHeight + 2
+            && document.body.scrollHeight <= document.body.clientHeight + 2;
           const emptyImage = document.querySelector('.empty-folder-state img');
           const emptyReady = ${JSON.stringify(smokeTestEmptyState)}
             ? emptyImage instanceof HTMLImageElement && emptyImage.src.includes('/ui/empty-files.png')
@@ -332,9 +334,10 @@ async function runSmokeTest(): Promise<void> {
 
           visualAssetsReady = backgroundImage.includes('app-background.png')
             && heroBanner instanceof HTMLImageElement
-            && heroBanner.src.includes('/ui/app-hero-banner.png')
+            && heroBanner.src.includes('/readme/github-preview.png')
             && helpBannerReady
-            && emptyReady;
+            && emptyReady
+            && pageDoesNotScroll;
         }
         if (${JSON.stringify(smokeTestShortcuts)}) {
           document.querySelector('[data-action="close-help"]')?.click();
@@ -353,6 +356,8 @@ async function runSmokeTest(): Promise<void> {
             && fileList.scrollHeight > fileList.clientHeight
             && fileListStyle !== null
             && ['auto', 'scroll'].includes(fileListStyle.overflowY);
+          const pageDoesNotScrollWithFiles = document.documentElement.scrollHeight <= document.documentElement.clientHeight + 2
+            && document.body.scrollHeight <= document.body.clientHeight + 2;
 
           const input = document.querySelector('#download-link');
           if (!(input instanceof HTMLInputElement)) return false;
@@ -425,6 +430,7 @@ async function runSmokeTest(): Promise<void> {
 
           const shortcutSmokeDetails = {
             fileListScrollReady,
+            pageDoesNotScrollWithFiles,
             ctrlAProtectedInput,
             selectAllReady,
             deleteDialogOpened,
@@ -449,6 +455,7 @@ async function runSmokeTest(): Promise<void> {
           window.__shortcutSmokeDetails = shortcutSmokeDetails;
 
           shortcutsReady = fileListScrollReady
+            && pageDoesNotScrollWithFiles
             && ctrlAProtectedInput
             && selectAllReady
             && copyShortcutReady
@@ -544,6 +551,8 @@ async function runSmokeTest(): Promise<void> {
           hasFileList: Boolean(document.querySelector('.file-list')),
           hasHeroBanner: Boolean(document.querySelector('.hero-banner img')),
           hasEmptyState: Boolean(document.querySelector('.empty-folder-state img')),
+          pageScrollHeight: document.documentElement.scrollHeight,
+          pageClientHeight: document.documentElement.clientHeight,
           shortcutSmokeDetails: window.__shortcutSmokeDetails ?? null,
           helpText: document.querySelector('[data-help-panel]')?.textContent?.slice(0, 200) ?? '',
           hasHelpSearch: Boolean(document.querySelector('[data-help-search]')),

@@ -14,7 +14,7 @@ export function renderTopbar(): string {
       </nav>
     </header>
     <div class="hero-banner" aria-hidden="true">
-      <img src="/ui/app-hero-banner.png" alt="" />
+      <img src="/readme/github-preview.png" alt="" />
     </div>
   `;
 }
