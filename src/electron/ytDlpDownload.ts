@@ -7,12 +7,37 @@ import {
   cleanAnalysisUrl,
   fileExists,
   resolveYtDlpPath,
+  spawnForText,
   validateUrl,
 } from "./ytDlpAnalysis";
 
 type DownloadResult = {
   url: string;
   outputPath: string | null;
+  compatibilityMessage: string;
+};
+
+type ToolCommand = {
+  command: string;
+  label: string;
+};
+
+type FfprobeStream = {
+  codec_type?: string;
+  codec_name?: string;
+};
+
+type FfprobeMetadata = {
+  format?: {
+    format_name?: string;
+    duration?: string;
+  };
+  streams?: FfprobeStream[];
+};
+
+type CompatibilityResult = {
+  compatible: boolean;
+  durationSeconds: number | null;
 };
 
 type ProgressCallback = (event: DownloadProgressEvent) => void;
@@ -42,18 +67,25 @@ export async function downloadLinkWithYtDlp(
     try {
       await spawnDownload(ytDlp.command, args, onProgress);
       const outputPath = await findNewMediaFile(settings.targetFolder, beforeFiles);
+      const compatibility = outputPath
+        ? await handleWhatsAppCompatibility(outputPath, settings, projectRoot, onProgress)
+        : {
+            outputPath: null,
+            message: "Download abgeschlossen",
+          };
       onProgress({
         phase: "complete",
         total: 100,
         download: 100,
-        conversion: 0,
-        status: "Download abgeschlossen",
+        conversion: compatibility.outputPath && compatibility.outputPath !== outputPath ? 100 : 0,
+        status: compatibility.message,
       });
-      console.log(`yt-dlp Download abgeschlossen: ${outputPath ?? "Datei nicht eindeutig erkannt"}`);
+      console.log(`yt-dlp Download abgeschlossen: ${compatibility.outputPath ?? outputPath ?? "Datei nicht eindeutig erkannt"}`);
 
       return {
         url: downloadUrl,
-        outputPath,
+        outputPath: compatibility.outputPath ?? outputPath,
+        compatibilityMessage: compatibility.message,
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unbekannter Fehler";
@@ -93,6 +125,219 @@ async function resolveFfmpegLocation(projectRoot: string): Promise<string | null
   }
 
   return null;
+}
+
+async function resolveToolPath(
+  configuredPath: string | null,
+  projectRoot: string,
+  toolName: "ffmpeg" | "ffprobe",
+): Promise<ToolCommand> {
+  if (configuredPath) {
+    if (await fileExists(configuredPath)) {
+      return {
+        command: configuredPath,
+        label: "Einstellungen",
+      };
+    }
+
+    throw new Error(`Der in den Einstellungen gespeicherte ${toolName}-Pfad wurde nicht gefunden.`);
+  }
+
+  const referencePath = path.join(projectRoot, "reference", "Windows", `${toolName}.exe`);
+
+  if (process.platform === "win32" && await fileExists(referencePath)) {
+    return {
+      command: referencePath,
+      label: `reference/Windows/${toolName}.exe`,
+    };
+  }
+
+  return {
+    command: process.platform === "win32" ? `${toolName}.exe` : toolName,
+    label: "PATH",
+  };
+}
+
+async function handleWhatsAppCompatibility(
+  outputPath: string,
+  settings: AppSettings,
+  projectRoot: string,
+  onProgress: ProgressCallback,
+): Promise<{ outputPath: string | null; message: string }> {
+  if (settings.whatsappCompatibilityMode === "never") {
+    return {
+      outputPath,
+      message: "Download abgeschlossen",
+    };
+  }
+
+  onProgress({
+    phase: "conversion",
+    total: 95,
+    download: 100,
+    conversion: 0,
+    status: "Pruefe WhatsApp-Kompatibilitaet...",
+  });
+
+  const ffprobe = await resolveToolPath(settings.ffprobePath, projectRoot, "ffprobe");
+  const compatibility = await probeWhatsAppCompatibility(ffprobe.command, outputPath);
+
+  if (settings.whatsappCompatibilityMode === "auto" && compatibility.compatible) {
+    return {
+      outputPath,
+      message: "Download abgeschlossen, keine Umwandlung noetig",
+    };
+  }
+
+  const ffmpeg = await resolveToolPath(settings.ffmpegPath, projectRoot, "ffmpeg");
+  const convertedPath = createConvertedOutputPath(outputPath);
+  await convertForWhatsApp(ffmpeg.command, outputPath, convertedPath, compatibility.durationSeconds, onProgress);
+
+  return {
+    outputPath: convertedPath,
+    message: "Download abgeschlossen",
+  };
+}
+
+async function probeWhatsAppCompatibility(ffprobeCommand: string, filePath: string): Promise<CompatibilityResult> {
+  const output = await spawnForText(ffprobeCommand, [
+    "-v",
+    "error",
+    "-print_format",
+    "json",
+    "-show_format",
+    "-show_streams",
+    filePath,
+  ]);
+  const metadata = JSON.parse(output) as FfprobeMetadata;
+  const formatNames = metadata.format?.format_name?.split(",") ?? [];
+  const videoStream = metadata.streams?.find((stream) => stream.codec_type === "video");
+  const audioStreams = metadata.streams?.filter((stream) => stream.codec_type === "audio") ?? [];
+  const duration = metadata.format?.duration ? Number(metadata.format.duration) : null;
+
+  return {
+    compatible: (formatNames.includes("mp4") || formatNames.includes("mov"))
+      && videoStream?.codec_name === "h264"
+      && audioStreams.every((stream) => stream.codec_name === "aac"),
+    durationSeconds: Number.isFinite(duration) ? duration : null,
+  };
+}
+
+function createConvertedOutputPath(inputPath: string): string {
+  const parsedPath = path.parse(inputPath);
+  const runId = new Date()
+    .toISOString()
+    .replace(/[-:TZ.]/g, "")
+    .slice(0, 17);
+
+  return path.join(parsedPath.dir, `${parsedPath.name} - WhatsApp ${runId}.mp4`);
+}
+
+function convertForWhatsApp(
+  ffmpegCommand: string,
+  inputPath: string,
+  outputPath: string,
+  durationSeconds: number | null,
+  onProgress: ProgressCallback,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(ffmpegCommand, [
+      "-n",
+      "-i",
+      inputPath,
+      "-map",
+      "0:v:0",
+      "-map",
+      "0:a?",
+      "-c:v",
+      "libx264",
+      "-preset",
+      "veryfast",
+      "-crf",
+      "23",
+      "-pix_fmt",
+      "yuv420p",
+      "-c:a",
+      "aac",
+      "-b:a",
+      "128k",
+      "-ac",
+      "2",
+      "-movflags",
+      "+faststart",
+      outputPath,
+    ], {
+      shell: false,
+      windowsHide: true,
+    });
+    let stderr = "";
+
+    onProgress({
+      phase: "conversion",
+      total: 95,
+      download: 100,
+      conversion: 1,
+      status: "Umwandlung laeuft...",
+    });
+
+    child.stderr.setEncoding("utf-8");
+    child.stderr.on("data", (chunk: string) => {
+      stderr += chunk;
+      const progress = parseFfmpegProgress(chunk, durationSeconds);
+
+      if (progress !== null) {
+        onProgress({
+          phase: "conversion",
+          total: Math.min(99, 95 + Math.round(progress * 0.04)),
+          download: 100,
+          conversion: progress,
+          status: "Umwandlung laeuft...",
+        });
+      }
+    });
+
+    child.on("error", (error) => {
+      reject(new Error(`ffmpeg konnte nicht gestartet werden: ${error.message}`));
+    });
+
+    child.on("close", (code) => {
+      if (code !== 0) {
+        reject(new Error(formatFfmpegError(stderr)));
+        return;
+      }
+
+      resolve();
+    });
+  });
+}
+
+function parseFfmpegProgress(chunk: string, durationSeconds: number | null): number | null {
+  if (!durationSeconds || durationSeconds <= 0) {
+    return null;
+  }
+
+  const matches = Array.from(chunk.matchAll(/time=(\d+):(\d+):(\d+(?:\.\d+)?)/g));
+  const match = matches.at(-1);
+
+  if (!match) {
+    return null;
+  }
+
+  const seconds = Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3]);
+  return clampPercent((seconds / durationSeconds) * 100);
+}
+
+function formatFfmpegError(stderr: string): string {
+  const cleanError = stderr
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(-4)
+    .join(" ");
+
+  return cleanError
+    ? `Umwandlung fehlgeschlagen: ${cleanError}`
+    : "Umwandlung fehlgeschlagen. ffmpeg konnte die Datei nicht verarbeiten.";
 }
 
 function buildDownloadArgs(

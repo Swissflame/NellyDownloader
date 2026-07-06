@@ -396,6 +396,16 @@ progress::-moz-progress-bar {
   margin: 0;
 }
 
+select {
+  width: 100%;
+  min-height: 2.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  background: #151922;
+  color: #f4f7fb;
+  padding: 0.35rem 0.55rem;
+}
+
 .toast-message {
   position: fixed;
   right: 1rem;

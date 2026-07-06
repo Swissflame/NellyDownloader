@@ -79,8 +79,21 @@ Begruendung:
 - der Dateiname enthaelt Titel, ID und Zeitstempel
 - Instagram nutzt dieselbe Cookie-Strategie wie die Analyse
 - Fortschritt wird nur als strukturiertes Event an den Renderer geschickt
+- Downloadmodi verhindern unnoetige doppelte yt-dlp-Analyse
+- Analyse und Download laufen sequenziell, nicht parallel fuer denselben Link
 
-## Entscheidung 8: Kopieren ueber System-Zwischenablage
+## Entscheidung 8: WhatsApp-Kompatibilitaet nach Download
+
+Begruendung:
+
+- `ffprobe` prueft Container und Codecs nach dem Download
+- kompatible Dateien muessen im Auto-Modus nicht umgewandelt werden
+- bei Bedarf erzeugt `ffmpeg` eine neue MP4/H.264/AAC-Datei
+- Originaldateien bleiben erhalten
+- Toolsuche laeuft ueber Einstellungen, Windows-Referenzdateien und `PATH`
+- Fortschritt der Umwandlung wird als strukturiertes Event an den Renderer geschickt
+
+## Entscheidung 9: Kopieren ueber System-Zwischenablage
 
 Begruendung:
 
@@ -92,7 +105,7 @@ Begruendung:
 - Fallback ist Text mit vollstaendigen Dateipfaden
 - macOS/Linux verwenden vorerst den Textpfad-Fallback
 
-## Entscheidung 9: WhatsApp-Ausgabe ueber Temp
+## Entscheidung 10: WhatsApp-Ausgabe ueber Temp
 
 Begruendung:
 
@@ -100,7 +113,7 @@ Begruendung:
 - Benutzer sieht nur die fertige Datei
 - Original-Zwischendateien koennen entfernt werden
 
-## Entscheidung 10: Windows-Version als funktionale Referenz
+## Entscheidung 11: Windows-Version als funktionale Referenz
 
 Begruendung:
 

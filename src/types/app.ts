@@ -38,14 +38,20 @@ export type TargetFolderState = {
 };
 
 export type CookieMode = "auto" | "browser" | "file" | "none";
+export type DownloadMode = "auto" | "analyze-first" | "direct";
+export type WhatsAppCompatibilityMode = "auto" | "always" | "never";
 
 export type AppSettings = {
   targetFolder: string;
   preferredFormat: string;
   whatsappCompatibleOutput: boolean;
+  downloadMode: DownloadMode;
+  whatsappCompatibilityMode: WhatsAppCompatibilityMode;
   cookieMode: CookieMode;
   browser: string;
   ytDlpPath: string | null;
+  ffmpegPath: string | null;
+  ffprobePath: string | null;
 };
 
 export type AppState = {

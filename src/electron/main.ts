@@ -14,6 +14,7 @@ const smokeTestUserData = process.env.NELLY_ELECTRON_TEST_USER_DATA;
 const smokeTestAnalyzeUrl = process.env.NELLY_ELECTRON_TEST_ANALYZE_URL;
 const smokeTestDownloadUrl = process.env.NELLY_ELECTRON_TEST_DOWNLOAD_URL;
 const smokeTestCopy = process.env.NELLY_ELECTRON_TEST_COPY === "1";
+const smokeTestSettings = process.env.NELLY_ELECTRON_TEST_SETTINGS === "1";
 const supportedExtensions = new Set(["mp4", "mkv", "webm", "mov", "avi", "mp3", "m4a", "wav", "opus"]);
 const projectRoot = path.resolve(__dirname, "..", "..", "..");
 
@@ -29,9 +30,13 @@ function getDefaultSettings(): AppSettings {
     targetFolder: path.join(app.getPath("videos"), "NellyDownloads"),
     preferredFormat: "MP4, H.264 bevorzugt",
     whatsappCompatibleOutput: true,
+    downloadMode: "auto",
+    whatsappCompatibilityMode: "auto",
     cookieMode: "auto",
     browser: "Automatisch",
     ytDlpPath: null,
+    ffmpegPath: null,
+    ffprobePath: null,
   };
 }
 
@@ -44,7 +49,7 @@ async function readSettings(): Promise<AppSettings> {
 
   try {
     const rawSettings = await fs.readFile(getSettingsPath(), "utf-8");
-    const parsedSettings = JSON.parse(rawSettings) as Partial<AppSettings>;
+    const parsedSettings = JSON.parse(rawSettings.replace(/^\uFEFF/, "")) as Partial<AppSettings>;
 
     return {
       ...defaults,
@@ -137,6 +142,18 @@ async function runSmokeTest(): Promise<void> {
         let analysisReady = true;
         let downloadReady = true;
         let copyReady = true;
+        let settingsReady = true;
+        if (${JSON.stringify(smokeTestSettings)}) {
+          const changedSettings = await window.nelly.saveSettings({
+            ...reloadedSettings,
+            downloadMode: 'direct',
+            whatsappCompatibilityMode: 'never'
+          });
+          const checkedSettings = await window.nelly.getSettings();
+          settingsReady = changedSettings.saved === true
+            && checkedSettings.downloadMode === 'direct'
+            && checkedSettings.whatsappCompatibilityMode === 'never';
+        }
         if (${JSON.stringify(Boolean(smokeTestAnalyzeUrl))}) {
           document.querySelector('[data-action="close-settings"]')?.click();
           const input = document.querySelector('#download-link');
@@ -180,7 +197,8 @@ async function runSmokeTest(): Promise<void> {
           && folder.files.some((file) => file.name === "electron-test.mp4")
           && analysisReady
           && downloadReady
-          && copyReady;
+          && copyReady
+          && settingsReady;
       })()
     `
     : `
@@ -391,9 +409,7 @@ function registerIpc(): void {
         started: true,
         url: result.url,
         outputPath: result.outputPath,
-        message: result.outputPath
-          ? `Download abgeschlossen: ${path.basename(result.outputPath)}`
-          : "Download abgeschlossen. Die neue Datei konnte nicht eindeutig zugeordnet werden.",
+        message: result.compatibilityMessage,
       };
     } catch (error) {
       sendProgress({

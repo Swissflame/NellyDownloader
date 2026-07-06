@@ -2,7 +2,14 @@ import { renderApp, bindApp } from "./components/app";
 import { showDialog } from "./components/dialog";
 import { DEFAULT_SETTINGS, EMPTY_LINK_DETAILS } from "./config/defaults";
 import { initialState } from "./data/demoState";
-import type { AppSettings, AppState, DownloadProgressEvent, TargetFolderState } from "./types/app";
+import type {
+  AppSettings,
+  AppState,
+  DownloadMode,
+  DownloadProgressEvent,
+  TargetFolderState,
+  WhatsAppCompatibilityMode,
+} from "./types/app";
 import type { AnalyzeLinkResult, ElectronApi } from "./types/electronApi";
 import "./styles.css";
 
@@ -92,6 +99,37 @@ document.addEventListener("click", (event) => {
   }
 
   void handleAction(action);
+});
+
+document.addEventListener("change", (event) => {
+  const target = event.target;
+
+  if (!(target instanceof HTMLSelectElement)) {
+    return;
+  }
+
+  const field = target.dataset.settingsField;
+
+  if (field === "downloadMode") {
+    state = {
+      ...state,
+      settings: {
+        ...state.settings,
+        downloadMode: target.value as DownloadMode,
+      },
+    };
+    return;
+  }
+
+  if (field === "whatsappCompatibilityMode") {
+    state = {
+      ...state,
+      settings: {
+        ...state.settings,
+        whatsappCompatibilityMode: target.value as WhatsAppCompatibilityMode,
+      },
+    };
+  }
 });
 
 async function handleAction(action: string): Promise<void> {
@@ -347,10 +385,12 @@ async function startDownloadWorkflow(url: string): Promise<void> {
     && state.linkDetails.error === null
     && state.linkDetails.platform !== EMPTY_LINK_DETAILS.platform
     && state.linkDetails.platform !== "Analysiere...";
+  const shouldAnalyzeBeforeDownload = state.settings.downloadMode === "analyze-first"
+    || (state.settings.downloadMode === "auto" && analyzedForCurrentLink);
 
   let downloadUrl = trimmedUrl;
 
-  if (!analyzedForCurrentLink) {
+  if (shouldAnalyzeBeforeDownload && !analyzedForCurrentLink) {
     const details = await analyzeLink(trimmedUrl);
 
     if (!details) {
@@ -397,10 +437,17 @@ async function startDownloadWorkflow(url: string): Promise<void> {
         total: 100,
         download: 100,
         conversion: 0,
-        status: "Download abgeschlossen",
+        status: result.message,
       },
       linkDetails: {
-        ...state.linkDetails,
+        ...(analyzedForCurrentLink ? state.linkDetails : {
+          ...EMPTY_LINK_DETAILS,
+          platform: "Direkt heruntergeladen",
+          title: result.outputPath ? getFileName(result.outputPath) : "-",
+          videoId: result.outputPath ? getVideoIdFromFileName(result.outputPath) : "-",
+          expectedOutput: state.settings.preferredFormat,
+          cookiesHint: "Metadaten wurden im Downloadprozess verarbeitet.",
+        }),
         error: null,
       },
     };
@@ -423,6 +470,15 @@ async function startDownloadWorkflow(url: string): Promise<void> {
     };
     render();
   }
+}
+
+function getFileName(filePath: string): string {
+  return filePath.split(/[\\/]/).pop() ?? filePath;
+}
+
+function getVideoIdFromFileName(filePath: string): string {
+  const match = getFileName(filePath).match(/\[([^\]]+)]/);
+  return match?.[1] ?? "-";
 }
 
 function applyDownloadProgress(progress: DownloadProgressEvent): void {

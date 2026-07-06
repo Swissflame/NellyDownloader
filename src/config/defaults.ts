@@ -6,9 +6,13 @@ export const DEFAULT_SETTINGS: AppSettings = {
   targetFolder: "C:\\Users\\Public\\Videos\\NellyDownloads",
   preferredFormat: "MP4, H.264 bevorzugt",
   whatsappCompatibleOutput: true,
+  downloadMode: "auto",
+  whatsappCompatibilityMode: "auto",
   cookieMode: "auto",
   browser: "Automatisch",
   ytDlpPath: null,
+  ffmpegPath: null,
+  ffprobePath: null,
 };
 
 export const EMPTY_LINK_DETAILS: LinkDetails = {

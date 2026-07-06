@@ -106,6 +106,14 @@ Sicherheitsregeln:
 
 Der Download laeuft im Electron Main-Prozess. Der Renderer startet ihn nur ueber `window.nelly.startDownload(url)` und erhaelt Fortschritt ueber die Preload-API.
 
+Der Downloadmodus wird in den Einstellungen gespeichert:
+
+- `Automatisch`: wenn der Link bereits analysiert ist, werden die vorhandenen Details verwendet; sonst startet direkt der Download
+- `Erst analysieren, dann herunterladen`: der bisherige sichere Ablauf mit Analyse vor dem Download
+- `Direkt herunterladen`: keine separate Analyse vor dem Download
+
+Der Renderer startet Analyse und Download sequenziell. Es werden nicht zwei yt-dlp-Prozesse parallel fuer denselben Link gestartet.
+
 Aktuelle Regeln:
 
 - es wird genau ein Link verarbeitet
@@ -118,7 +126,29 @@ Aktuelle Regeln:
 - Instagram nutzt dieselbe Browser-Cookie-Strategie wie die Analyse
 - Kopieren und Loeschen bleiben deaktiviert
 
-Der Renderer zeigt Download-Fortschritt aus der yt-dlp-Ausgabe an. Eine moegliche Zusammenfuehrung durch yt-dlp wird als vorlaeufiger Umwandlungs-/Zusammenfuehrungsstatus dargestellt. Es wird keine eigene ffmpeg-Konvertierung erzwungen.
+Der Renderer zeigt Download-Fortschritt aus der yt-dlp-Ausgabe an. Eine moegliche Zusammenfuehrung durch yt-dlp wird als vorlaeufiger Umwandlungs-/Zusammenfuehrungsstatus dargestellt. Eine eigene ffmpeg-Konvertierung startet nur je nach WhatsApp-Kompatibilitaetsmodus.
+
+## WhatsApp-Kompatibilitaet
+
+Nach dem Download kann die Datei mit `ffprobe` geprueft werden. Kompatibel ist:
+
+- Container `mp4` oder `mov`
+- Video-Codec `h264`
+- Audio-Codec `aac` oder kein Audio
+
+Der Modus wird in den Einstellungen gespeichert:
+
+- `Auto`: kompatible Dateien bleiben unveraendert, sonst wird mit `ffmpeg` nach MP4/H.264/AAC konvertiert
+- `Immer umwandeln`: es wird immer eine neue WhatsApp-MP4 erzeugt
+- `Nie umwandeln`: es wird keine ffmpeg-Konvertierung gestartet
+
+Originaldateien werden bei der Umwandlung vorerst behalten und nicht geloescht.
+
+`ffprobe` und `ffmpeg` werden in dieser Reihenfolge gesucht:
+
+1. gespeicherter Pfad aus den Einstellungen
+2. unter Windows die Entwicklungsreferenz `reference/Windows/ffprobe.exe` bzw. `reference/Windows/ffmpeg.exe`
+3. `ffprobe` oder `ffmpeg` aus dem `PATH`
 
 ## Zielordnerzugriff
 

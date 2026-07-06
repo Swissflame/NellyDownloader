@@ -25,16 +25,18 @@ Aktuell aktiv:
 
 - Link-Analyse mit `yt-dlp`
 - sicherer Einzel-Download mit `yt-dlp`
+- Downloadmodus: automatisch, erst analysieren oder direkt herunterladen
 - Playlists sind deaktiviert
 - bestehende Dateien werden nicht ueberschrieben
 - Instagram kann Browser-Cookies verwenden
+- WhatsApp-Kompatibilitaet: Auto, immer umwandeln oder nie umwandeln
+- ffprobe/ffmpeg werden fuer Kompatibilitaetspruefung und optionale Umwandlung genutzt
 - ausgewaehlte Dateien koennen in die System-Zwischenablage kopiert werden
 - Dateien werden beim Kopieren nicht veraendert
 
 Noch nicht aktiv:
 
 - Loeschen ausgewaehlter Dateien
-- eigene WhatsApp-/ffmpeg-Konvertierung
 
 ## Hauptfunktionen
 
