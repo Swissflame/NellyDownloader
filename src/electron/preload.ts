@@ -4,6 +4,7 @@ import type { ElectronApi } from "../types/electronApi";
 
 const electronApi: ElectronApi = {
   getAppVersion: () => ipcRenderer.invoke("app:get-version"),
+  readClipboardText: () => ipcRenderer.invoke("clipboard:read-text"),
   getSettings: () => ipcRenderer.invoke("settings:get"),
   saveSettings: (settings: AppSettings) => ipcRenderer.invoke("settings:save", settings),
   selectTargetFolder: () => ipcRenderer.invoke("folder:select-target"),

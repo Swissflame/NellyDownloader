@@ -1,3 +1,4 @@
+import { clipboard } from "electron";
 import { app, BrowserWindow, dialog, ipcMain } from "electron/main";
 import type { BrowserWindow as BrowserWindowInstance, OpenDialogOptions } from "electron/main";
 import * as fs from "node:fs/promises";
@@ -18,6 +19,8 @@ const smokeTestCopy = process.env.NELLY_ELECTRON_TEST_COPY === "1";
 const smokeTestSettings = process.env.NELLY_ELECTRON_TEST_SETTINGS === "1";
 const smokeTestTrash = process.env.NELLY_ELECTRON_TEST_TRASH === "1";
 const smokeTestHelp = process.env.NELLY_ELECTRON_TEST_HELP === "1";
+const smokeTestClipboardDownload = process.env.NELLY_ELECTRON_TEST_CLIPBOARD_DOWNLOAD === "1";
+const smokeTestClipboardText = process.env.NELLY_ELECTRON_TEST_CLIPBOARD_TEXT;
 const supportedExtensions = new Set(["mp4", "mkv", "webm", "mov", "avi", "mp3", "m4a", "wav", "opus"]);
 const projectRoot = path.resolve(__dirname, "..", "..", "..");
 
@@ -149,6 +152,7 @@ async function runSmokeTest(): Promise<void> {
         let settingsReady = true;
         let trashReady = true;
         let helpReady = true;
+        let clipboardDownloadReady = true;
         if (${JSON.stringify(smokeTestSettings)}) {
           const changedSettings = await window.nelly.saveSettings({
             ...reloadedSettings,
@@ -261,6 +265,31 @@ async function runSmokeTest(): Promise<void> {
           }
           helpReady = panelVisible && termResults.length === terms.length && termResults.every(Boolean);
         }
+        if (${JSON.stringify(smokeTestClipboardDownload)}) {
+          document.querySelector('[data-action="close-help"]')?.click();
+          await new Promise((resolve) => setTimeout(resolve, 150));
+          const beforeClipboardDownload = await window.nelly.listTargetFolder();
+          document.querySelector('[data-download-button]')?.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2 }));
+          for (let attempt = 0; attempt < 360; attempt += 1) {
+            const statusText = document.querySelector('[data-status]')?.textContent ?? '';
+            const toastText = document.querySelector('[data-toast]')?.textContent ?? '';
+            if (toastText.includes('Keine gültige URL')
+              || statusText.includes('Download abgeschlossen')
+              || statusText.includes('Umwandlung abgeschlossen')
+              || statusText.includes('Download fehlgeschlagen')) break;
+            await new Promise((resolve) => setTimeout(resolve, 500));
+          }
+          const afterClipboardDownload = await window.nelly.listTargetFolder();
+          const input = document.querySelector('#download-link');
+          const toastText = document.querySelector('[data-toast]')?.textContent ?? '';
+          const expectedClipboardDownload = ${JSON.stringify(Boolean(smokeTestClipboardText?.startsWith("http://") || smokeTestClipboardText?.startsWith("https://") || (!smokeTestClipboardText && smokeTestClipboardDownload)))};
+          clipboardDownloadReady = expectedClipboardDownload
+            ? input instanceof HTMLInputElement
+              && input.value.startsWith('http')
+              && afterClipboardDownload.files.length > beforeClipboardDownload.files.length
+            : toastText.includes('Keine gültige URL')
+              && afterClipboardDownload.files.length === beforeClipboardDownload.files.length;
+        }
         return settingsPanelVisible
           && saved.saved === true
           && reloadedSettings.targetFolder === ${JSON.stringify(smokeTestTargetFolder)}
@@ -271,7 +300,8 @@ async function runSmokeTest(): Promise<void> {
           && copyReady
           && settingsReady
           && trashReady
-          && helpReady;
+          && helpReady
+          && clipboardDownloadReady;
       })()
     `
     : `
@@ -288,6 +318,10 @@ async function runSmokeTest(): Promise<void> {
     `;
 
   try {
+    if (smokeTestClipboardDownload) {
+      clipboard.writeText(smokeTestClipboardText ?? "https://www.tiktok.com/@scout2015/video/6718335390845095173");
+    }
+
     const testPassed = await mainWindow.webContents.executeJavaScript(testScript);
 
     if (testPassed) {
@@ -398,6 +432,8 @@ function formatDate(date: Date): string {
 
 function registerIpc(): void {
   ipcMain.handle("app:get-version", () => app.getVersion());
+
+  ipcMain.handle("clipboard:read-text", () => clipboard.readText());
 
   ipcMain.handle("settings:get", () => readSettings());
 

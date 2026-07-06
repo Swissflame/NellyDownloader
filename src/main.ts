@@ -345,8 +345,56 @@ document.addEventListener("nelly:placeholder-action", (event) => {
 
   if (placeholderEvent.detail.action === "download") {
     void startDownloadWorkflow(placeholderEvent.detail.url ?? "");
+    return;
+  }
+
+  if (placeholderEvent.detail.action === "download-from-clipboard") {
+    void startDownloadFromClipboard();
   }
 });
+
+async function startDownloadFromClipboard(): Promise<void> {
+  try {
+    const clipboardText = await localApi.readClipboardText();
+    const url = findFirstValidHttpUrl(clipboardText);
+
+    if (!url) {
+      showToast("Keine gültige URL in der Zwischenablage.");
+      return;
+    }
+
+    state = {
+      ...state,
+      linkInput: url,
+    };
+    render();
+    showToast("Link aus Zwischenablage übernommen.");
+    await startDownloadWorkflow(url);
+  } catch (error) {
+    showToast(error instanceof Error ? error.message : "Zwischenablage konnte nicht gelesen werden.");
+  }
+}
+
+function findFirstValidHttpUrl(clipboardText: string): string | null {
+  const candidates = clipboardText
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  for (const candidate of candidates) {
+    try {
+      const url = new URL(candidate);
+
+      if (url.protocol === "http:" || url.protocol === "https:") {
+        return url.toString();
+      }
+    } catch {
+      // Try the next line.
+    }
+  }
+
+  return null;
+}
 
 async function analyzeLink(url: string): Promise<AnalyzeLinkResult | null> {
   const trimmedUrl = url.trim();
@@ -555,6 +603,7 @@ function createFallbackApi(): ElectronApi {
 
   return {
     getAppVersion: async () => "dev",
+    readClipboardText: async () => navigator.clipboard?.readText?.() ?? "",
     getSettings: async () => memorySettings,
     saveSettings: async (settings) => {
       memorySettings = settings;

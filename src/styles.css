@@ -115,6 +115,12 @@ input:focus-visible {
   color: #aab3c2;
 }
 
+.hint-text {
+  margin: 0.35rem 0 0;
+  color: #8fb9ff;
+  font-size: 0.86rem;
+}
+
 .link-form {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

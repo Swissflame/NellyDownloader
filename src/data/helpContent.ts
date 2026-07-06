@@ -51,10 +51,11 @@ export const helpChapters: HelpChapter[] = [
     title: "Video herunterladen",
     body: [
       "Der Button Download starten verarbeitet den eingegebenen Link entsprechend dem gewaehlten Downloadmodus.",
+      "Linksklick startet mit dem eingetragenen Link. Rechtsklick liest eine http- oder https-URL aus der Zwischenablage, fuegt sie ein und startet sofort.",
       "Der Download laeuft im Main-Prozess. Die Oberflaeche zeigt Fortschritt und aktualisiert danach den Zielordner.",
       "Bestehende Dateien werden nicht ueberschrieben. Dateinamen enthalten Titel, ID und Zeitstempel.",
     ],
-    keywords: ["download", "fortschritt", "dateiname"],
+    keywords: ["download", "fortschritt", "dateiname", "zwischenablage", "rechtsklick"],
   },
   {
     id: "download-mode",

@@ -25,6 +25,7 @@ Aktuell aktiv:
 
 - Link-Analyse mit `yt-dlp`
 - sicherer Einzel-Download mit `yt-dlp`
+- Rechtsklick auf Download starten uebernimmt eine URL aus der Zwischenablage und startet sofort
 - Downloadmodus: automatisch, erst analysieren oder direkt herunterladen
 - Playlists sind deaktiviert
 - bestehende Dateien werden nicht ueberschrieben

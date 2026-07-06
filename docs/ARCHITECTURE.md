@@ -88,6 +88,8 @@ API-Methoden:
 
 Die Link-Analyse laeuft im Electron Main-Prozess. Der Renderer uebergibt nur die URL ueber `window.nelly.analyzeLink(url)`.
 
+Der Download-Button hat zwei Bedienwege: Linksklick nutzt den eingetragenen Link, Rechtsklick liest ueber die Preload-API nur Text aus der System-Zwischenablage. Der Renderer akzeptiert daraus nur http- und https-URLs und startet danach denselben Downloadworkflow wie beim normalen Klick.
+
 Sicherheitsregeln:
 
 - nur `http://` und `https://` URLs werden akzeptiert

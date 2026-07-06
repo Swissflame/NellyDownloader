@@ -36,6 +36,7 @@ export type AnalyzeLinkResult = LinkDetails & {
 
 export type ElectronApi = {
   getAppVersion: () => Promise<string>;
+  readClipboardText: () => Promise<string>;
   getSettings: () => Promise<AppSettings>;
   saveSettings: (settings: AppSettings) => Promise<SaveSettingsResult>;
   selectTargetFolder: () => Promise<SelectTargetFolderResult>;
