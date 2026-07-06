@@ -600,7 +600,7 @@ mark {
 
 .file-list-empty {
   min-height: 12rem;
-  overflow: hidden;
+  overflow: auto;
 }
 
 .folder-message {
@@ -622,7 +622,7 @@ mark {
 
 .empty-folder-state img {
   width: min(34rem, 88%);
-  max-height: 18rem;
+  max-height: min(16rem, 52vh);
   border-radius: 8px;
   object-fit: contain;
   opacity: 0.94;

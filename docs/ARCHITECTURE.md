@@ -75,7 +75,24 @@ Der Renderer bindet diese Dateien ueber Vites `publicDir: "../assets"` ein. Dadu
 
 Der Electron Main-Prozess setzt das Fenstericon ueber eine kleine Asset-Pfad-Hilfe aus `src/electron/assetPaths.ts`. Der Pfad basiert auf dem Projektroot und verwendet keine absoluten Entwicklerpfade.
 
-Die Installer-Assets sind vorbereitet, werden aber noch nicht fuer einen Installer-Build verwendet.
+Das Installer-Icon wird fuer den NSIS-Build verwendet. Header- und Sidebar-Grafiken sind vorbereitet, werden aber noch nicht eingebunden, weil die aktuelle NSIS-Konfiguration nur sichere Icon-Assets nutzt.
+
+## Packaging / Windows-Installer
+
+Der Windows-Installer wird mit `electron-builder` aus dem `src`-Projekt erzeugt.
+
+Wichtige Punkte:
+
+- App- und Produktname: `NellyDownloader`
+- Installer-Ziel: NSIS fuer Windows x64
+- Ausgabeordner: `src/release/`
+- Windows-App-Icon: `assets/icons/app-icon.ico`
+- Installer-Icon: `assets/installer/installer-icon.ico`
+- Startmenue- und Desktop-Verknuepfung werden erzeugt
+
+Der installierte Build nutzt das Icon als `extraResources` unter `resources/assets/icons/app-icon.ico`. Die Renderer-Assets werden weiterhin durch den Vite-Build in `dist/` bereitgestellt.
+
+`yt-dlp`, `ffmpeg` und `ffprobe` werden in diesem Schritt noch nicht als Installer-Resources mitgeliefert. Die aktuelle Toolsuche bleibt unveraendert: gespeicherter Pfad, Entwicklungsreferenz unter `reference/Windows` und danach `PATH`.
 
 ## Electron Main-Prozess
 
@@ -93,7 +110,7 @@ Aufgaben:
 - Zielordnerinhalt lesen und als sichere Daten an den Renderer geben
 - Link-Metadaten mit `yt-dlp` analysieren
 - spaeter weitere lokale Betriebssystemfunktionen kapseln
-- spaeter externe Tools wie `yt-dlp`, `ffmpeg` und `ffprobe` starten
+- externe Tools wie `yt-dlp`, `ffmpeg` und `ffprobe` starten
 
 Sicherheit:
 

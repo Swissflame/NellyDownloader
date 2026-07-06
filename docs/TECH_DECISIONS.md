@@ -160,3 +160,13 @@ Begruendung:
 - Link-, Analyse- und Fortschrittsbereiche bleiben leichter sichtbar
 - Kopieren- und Papierkorb-Buttons bleiben unter der Liste erreichbar
 - die Aenderung betrifft nur Layout/CSS und keine Dateioperationen
+
+## Entscheidung 16: electron-builder fuer Windows-Installer
+
+Begruendung:
+
+- electron-builder integriert Vite-Renderer und Electron-Main ohne eigene Installer-Pipeline
+- NSIS erzeugt einen normalen Windows-Installer mit Startmenue- und Desktop-Verknuepfung
+- App-Icon und Installer-Icon koennen aus den vorhandenen Assets verwendet werden
+- Build-Artefakte landen in `src/release/` und werden nicht committed
+- externe Tool-Binaries werden noch nicht mitgeliefert, damit die bestehende Toolsuche unveraendert bleibt

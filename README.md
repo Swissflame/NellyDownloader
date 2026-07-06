@@ -30,9 +30,11 @@ NellyDownloader ist eine lokale Electron-App zum Analysieren, Herunterladen und 
 
 ## Entwicklungsstand
 
-Die Desktop-App ist funktionsfaehig fuer Analyse, Einzel-Download, Zielordner, Kopieren, Papierkorb und Hilfe. Icons und UI-Grafiken sind eingebunden. Ein Installer ist noch nicht fertig; die vorbereiteten Installer-Assets liegen bereits unter `assets/installer`.
+Die Desktop-App ist funktionsfaehig fuer Analyse, Einzel-Download, Zielordner, Kopieren, Papierkorb und Hilfe. Icons und UI-Grafiken sind eingebunden. Ein Windows-Installer kann mit electron-builder erzeugt werden.
 
 Die Tastenkombinationen sind mit Standardbelegung vorbereitet und in den Einstellungen sichtbar. Freie Bearbeitung der Belegung folgt spaeter.
+
+Aktueller Entwicklungsstand: yt-dlp, ffmpeg und ffprobe werden noch nicht in den Installer aufgenommen. In der Entwicklungsfassung werden gespeicherte Tool-Pfade, `reference/Windows` und danach der `PATH` geprueft.
 
 ## Entwicklung
 
@@ -42,6 +44,10 @@ npm install
 npm run dev
 npm run dev:electron
 npm run build
+npm run package
+npm run dist:win
 ```
+
+Der Windows-Installer landet nach `npm run dist:win` unter `src/release/`. Der Ordner wird nicht committed.
 
 Die Entwicklungsreferenzen unter `reference/` duerfen nur gelesen und nicht veraendert werden.

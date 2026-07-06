@@ -1,7 +1,9 @@
 {
   "name": "nelly-downloader-ui",
   "version": "0.1.0",
+  "description": "Lokale Electron-App zum Analysieren, Herunterladen und Vorbereiten einzelner Medienlinks.",
   "productName": "NellyDownloader",
+  "author": "NellyDownloader",
   "private": true,
   "type": "module",
   "main": "dist-electron/electron/main.cjs",
@@ -10,11 +12,61 @@
     "dev:electron": "npm run build:electron && node scripts/dev-electron.mjs",
     "build": "tsc && vite build && npm run build:electron",
     "build:electron": "node scripts/clean-electron-build.mjs && tsc -p tsconfig.electron.json && node scripts/prepare-electron-build.mjs",
+    "package": "npm run build && electron-builder --dir",
+    "dist:win": "npm run build && electron-builder --win nsis --x64",
     "preview": "vite preview --host 127.0.0.1"
+  },
+  "build": {
+    "appId": "de.nellydownloader.app",
+    "productName": "NellyDownloader",
+    "copyright": "Copyright (c) 2026 NellyDownloader",
+    "asar": true,
+    "electronDist": "node_modules/electron/dist",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../assets/icons/app-icon.ico",
+        "to": "assets/icons/app-icon.ico"
+      }
+    ],
+    "extraMetadata": {
+      "name": "nelly-downloader",
+      "productName": "NellyDownloader",
+      "main": "dist-electron/electron/main.cjs"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "../assets/icons/app-icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "NellyDownloader",
+      "installerIcon": "../assets/installer/installer-icon.ico",
+      "uninstallerIcon": "../assets/installer/installer-icon.ico"
+    }
   },
   "devDependencies": {
     "@types/node": "^26.1.0",
     "electron": "^43.0.0",
+    "electron-builder": "^26.15.3",
     "typescript": "^5.8.3",
     "vite": "^7.0.0"
   }

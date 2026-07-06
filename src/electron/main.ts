@@ -29,7 +29,7 @@ const smokeTestVisualAssets = process.env.NELLY_ELECTRON_TEST_VISUAL_ASSETS === 
 const smokeTestEmptyState = process.env.NELLY_ELECTRON_TEST_EMPTY_STATE === "1";
 const supportedExtensions = new Set(["mp4", "mkv", "webm", "mov", "avi", "mp3", "m4a", "wav", "opus"]);
 const projectRoot = path.resolve(__dirname, "..", "..", "..");
-const windowIconPath = getAssetPath(projectRoot, "icons", "app-icon.ico");
+const windowIconPath = getAssetPath(projectRoot, app.isPackaged, "icons", "app-icon.ico");
 
 app.setName("NellyDownloader");
 
