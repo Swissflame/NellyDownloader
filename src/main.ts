@@ -103,6 +103,9 @@ async function handleAction(action: string): Promise<void> {
     case "select-target-folder":
       await selectTargetFolder();
       return;
+    case "save-settings":
+      await saveCurrentSettings();
+      return;
     case "refresh":
       await refreshTargetFolder();
       return;
@@ -123,6 +126,29 @@ async function handleAction(action: string): Promise<void> {
         title: "Hinweis",
         text: "Diese Funktion wird später umgesetzt.",
       });
+  }
+}
+
+async function saveCurrentSettings(): Promise<void> {
+  try {
+    const result = await localApi.saveSettings(state.settings);
+
+    state = {
+      ...state,
+      settings: result.settings,
+      settingsVisible: true,
+    };
+    render();
+
+    showDialog({
+      title: "Einstellungen gespeichert",
+      text: result.message,
+    });
+  } catch (error) {
+    showDialog({
+      title: "Einstellungen",
+      text: error instanceof Error ? error.message : "Die Einstellungen konnten nicht gespeichert werden.",
+    });
   }
 }
 

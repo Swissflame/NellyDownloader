@@ -271,14 +271,33 @@ progress::-moz-progress-bar {
   margin-top: 1rem;
 }
 
+.settings-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.62);
+}
+
 .settings-panel {
-  margin-top: 1rem;
+  width: min(46rem, 100%);
+  max-height: min(42rem, calc(100vh - 2rem));
+  overflow: auto;
 }
 
 .settings-actions {
   display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
   justify-content: flex-end;
   margin-top: 1rem;
+}
+
+.settings-note {
+  margin: 1rem 0 0;
+  color: #b9c5d6;
 }
 
 .folder-path {
