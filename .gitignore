@@ -1,0 +1,49 @@
+# Temporäre Dateien
+temp/
+**/temp/
+*.log
+
+# Lokale Konfigurationen / Pfade
+config.ini
+config.conf
+zielordner.txt
+*.local
+.env
+
+# Download- und Ausgabedateien
+downloads/
+output/
+exports/
+*.mp4
+*.mkv
+*.webm
+*.mov
+*.avi
+*.mp3
+*.m4a
+*.wav
+*.opus
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Build / Installer
+build/
+dist/
+*.spec
+
+# Betriebssystem / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Externe Programme in der Referenz nicht nach GitHub hochladen
+reference/**/ffmpeg.exe
+reference/**/ffprobe.exe
+reference/**/yt-dlp.exe
+reference/**/ffmpeg
+reference/**/ffprobe
+reference/**/yt-dlp
