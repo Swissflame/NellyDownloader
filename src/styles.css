@@ -1,0 +1,389 @@
+:root {
+  color-scheme: dark;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  background: #101114;
+  color: #f4f7fb;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background:
+    linear-gradient(120deg, rgba(56, 89, 166, 0.28), transparent 32rem),
+    linear-gradient(220deg, rgba(29, 129, 109, 0.16), transparent 28rem),
+    #101114;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  min-height: 2.5rem;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    transform 140ms ease,
+    border-color 140ms ease,
+    background 140ms ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid rgba(124, 184, 255, 0.75);
+  outline-offset: 3px;
+}
+
+.shell {
+  width: min(1180px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 1.25rem 0 2rem;
+}
+
+.topbar,
+.panel,
+.link-panel {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(26, 29, 36, 0.86);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.26);
+  backdrop-filter: blur(18px);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 5rem;
+  padding: 1rem 1.25rem;
+  border-radius: 8px 8px 0 0;
+}
+
+.topbar h1,
+.panel h2,
+.link-panel h2 {
+  margin: 0;
+  letter-spacing: 0;
+}
+
+.topbar h1 {
+  font-size: clamp(1.35rem, 2.5vw, 2rem);
+}
+
+.eyebrow {
+  margin: 0 0 0.25rem;
+  color: #8fb9ff;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.topnav,
+.file-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.link-panel {
+  display: grid;
+  grid-template-columns: minmax(12rem, 0.35fr) minmax(18rem, 1fr);
+  gap: 1rem;
+  align-items: end;
+  padding: 1.25rem;
+  border-top: 0;
+}
+
+.muted {
+  margin: 0.35rem 0 0;
+  color: #aab3c2;
+}
+
+.link-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+}
+
+.link-form input {
+  width: 100%;
+  min-height: 3rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 0 0.95rem;
+  background: #0f1218;
+  color: #f4f7fb;
+}
+
+.primary-button,
+.secondary-button,
+.danger-button,
+.ghost-button {
+  padding: 0.65rem 0.95rem;
+  color: #f8fbff;
+  font-weight: 700;
+}
+
+.primary-button {
+  background: #2f80ed;
+}
+
+.secondary-button {
+  background: #236b57;
+}
+
+.danger-button {
+  background: #b94354;
+}
+
+.ghost-button {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(20rem, 0.8fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.panel {
+  border-radius: 8px;
+  padding: 1.25rem;
+}
+
+.panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.status-pill,
+.status-text {
+  color: #b8c4d7;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.status-pill {
+  border: 1px solid rgba(143, 185, 255, 0.3);
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  background: rgba(47, 128, 237, 0.12);
+  color: #b9d6ff;
+}
+
+.details-layout {
+  display: grid;
+  grid-template-columns: 12rem minmax(0, 1fr);
+  gap: 1.1rem;
+}
+
+.thumbnail {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 10;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: #141922;
+  color: #95a2b6;
+  font-weight: 700;
+}
+
+.details-list {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+}
+
+.details-list div {
+  display: grid;
+  grid-template-columns: minmax(8rem, 0.34fr) minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+.details-list dt {
+  color: #8d98aa;
+}
+
+.details-list dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.progress-stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.35rem;
+  color: #d9e2f0;
+}
+
+progress {
+  width: 100%;
+  height: 0.9rem;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: #0e1218;
+}
+
+progress::-webkit-progress-bar {
+  background: #0e1218;
+}
+
+progress::-webkit-progress-value {
+  border-radius: 999px;
+  background: linear-gradient(90deg, #2f80ed, #20a386);
+}
+
+progress::-moz-progress-bar {
+  border-radius: 999px;
+  background: linear-gradient(90deg, #2f80ed, #20a386);
+}
+
+.target-panel {
+  margin-top: 1rem;
+}
+
+.folder-path {
+  margin-bottom: 0.8rem;
+  color: #b9c5d6;
+  overflow-wrap: anywhere;
+}
+
+.file-list {
+  display: grid;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.file-row {
+  display: grid;
+  grid-template-columns: 1.8rem minmax(12rem, 1fr) 5.5rem 7rem 5rem;
+  gap: 0.75rem;
+  align-items: center;
+  min-height: 3.2rem;
+  padding: 0.7rem 0.85rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.file-row + .file-row {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.file-row input {
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: #2f80ed;
+}
+
+.file-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 700;
+}
+
+.file-type {
+  color: #8fb9ff;
+  font-weight: 700;
+}
+
+.file-actions {
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.app-dialog {
+  width: min(28rem, calc(100% - 2rem));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 0;
+  background: #1a1d24;
+  color: #f4f7fb;
+}
+
+.app-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.62);
+}
+
+.app-dialog form {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.app-dialog h2,
+.app-dialog p {
+  margin: 0;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 860px) {
+  .topbar,
+  .link-panel,
+  .content-grid,
+  .details-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .topbar {
+    display: grid;
+  }
+
+  .link-form {
+    grid-template-columns: 1fr;
+  }
+
+  .file-row {
+    grid-template-columns: 1.8rem minmax(0, 1fr);
+  }
+
+  .file-row span:not(.file-name) {
+    grid-column: 2;
+    color: #aab3c2;
+  }
+
+  .file-actions {
+    justify-content: stretch;
+  }
+
+  .file-actions button,
+  .topnav button {
+    flex: 1 1 auto;
+  }
+}
