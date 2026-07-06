@@ -46,4 +46,12 @@ npm run dist:win
 
 Der NSIS-Installer wird unter `src/release/` erzeugt. Der Ordner ist in `.gitignore` eingetragen und wird nicht committed.
 
-Aktueller Stand: `yt-dlp.exe`, `ffmpeg.exe` und `ffprobe.exe` werden noch nicht in den Installer aufgenommen. Fuer Entwicklung und Tests greift die App weiterhin auf gespeicherte Tool-Pfade, `reference/Windows` oder den `PATH` zurueck.
+Fuer den Installer-Build muessen diese Dateien lokal vorhanden sein:
+
+- `reference/Windows/yt-dlp.exe`
+- `reference/Windows/ffmpeg.exe`
+- `reference/Windows/ffprobe.exe`
+
+Sie werden beim Build als Ressourcen in den Installer aufgenommen und liegen in der installierten App unter `resources/tools/win/`. Die Dateien bleiben im Git ignoriert und werden nicht als normale Repository-Dateien committed.
+
+Im Dev-Modus greift die App weiterhin auf gespeicherte Tool-Pfade, `reference/Windows` oder den `PATH` zurueck.

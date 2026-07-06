@@ -1,4 +1,5 @@
 import { APP_NAME } from "../config/defaults";
+import { UI_ASSETS } from "../config/assets";
 
 export function renderTopbar(): string {
   return `
@@ -14,7 +15,7 @@ export function renderTopbar(): string {
       </nav>
     </header>
     <div class="hero-banner" aria-hidden="true">
-      <img src="/readme/github-preview.png" alt="" />
+      <img src="${UI_ASSETS.heroBanner}" alt="" />
     </div>
   `;
 }

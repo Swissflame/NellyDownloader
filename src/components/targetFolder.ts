@@ -1,4 +1,5 @@
 import type { OutputFile, TargetFolderState } from "../types/app";
+import { UI_ASSETS } from "../config/assets";
 import { escapeHtml } from "../utils/html";
 
 export function renderTargetFolder(folderState: TargetFolderState, targetFolder: string): string {
@@ -37,7 +38,7 @@ function emptyFolderMessage(folderState: TargetFolderState): string {
 
   return `
     <div class="folder-message empty-folder-state">
-      <img src="/ui/empty-files.png" alt="" />
+      <img src="${UI_ASSETS.emptyFiles}" alt="" />
       <p>${message}</p>
     </div>
   `;

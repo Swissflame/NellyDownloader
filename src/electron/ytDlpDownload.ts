@@ -11,6 +11,7 @@ import {
   spawnForText,
   validateUrl,
 } from "./ytDlpAnalysis";
+import { pathToolCommand, resolveBundledToolPath } from "./toolPaths";
 
 type DownloadResult = {
   url: string;
@@ -119,6 +120,12 @@ async function assertTargetFolder(targetFolder: string): Promise<void> {
 }
 
 async function resolveFfmpegLocation(projectRoot: string): Promise<string | null> {
+  const bundledFfmpeg = await resolveBundledToolPath("ffmpeg");
+
+  if (bundledFfmpeg) {
+    return path.dirname(bundledFfmpeg.command);
+  }
+
   const referenceFfmpeg = path.join(projectRoot, "reference", "Windows", "ffmpeg.exe");
 
   if (process.platform === "win32" && await fileExists(referenceFfmpeg)) {
@@ -145,6 +152,11 @@ async function resolveToolPath(
   }
 
   const referencePath = path.join(projectRoot, "reference", "Windows", `${toolName}.exe`);
+  const bundledTool = await resolveBundledToolPath(toolName);
+
+  if (bundledTool) {
+    return bundledTool;
+  }
 
   if (process.platform === "win32" && await fileExists(referencePath)) {
     return {
@@ -153,10 +165,7 @@ async function resolveToolPath(
     };
   }
 
-  return {
-    command: process.platform === "win32" ? `${toolName}.exe` : toolName,
-    label: "PATH",
-  };
+  return pathToolCommand(toolName);
 }
 
 async function handleWhatsAppCompatibility(

@@ -1,6 +1,7 @@
 import { renderApp, bindApp } from "./components/app";
 import { showConfirmDialog, showDialog } from "./components/dialog";
 import { DEFAULT_SETTINGS, EMPTY_LINK_DETAILS } from "./config/defaults";
+import { UI_ASSETS } from "./config/assets";
 import { DEFAULT_KEYBOARD_SHORTCUTS } from "./config/shortcuts";
 import { initialState } from "./data/demoState";
 import type {
@@ -29,6 +30,8 @@ let state: AppState = {
   ...initialState,
   settings: DEFAULT_SETTINGS,
 };
+
+document.documentElement.style.setProperty("--app-background-image", `url('${UI_ASSETS.appBackground}')`);
 
 render();
 localApi.onDownloadProgress((progress) => {

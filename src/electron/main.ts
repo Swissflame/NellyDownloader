@@ -30,6 +30,9 @@ const smokeTestEmptyState = process.env.NELLY_ELECTRON_TEST_EMPTY_STATE === "1";
 const supportedExtensions = new Set(["mp4", "mkv", "webm", "mov", "avi", "mp3", "m4a", "wav", "opus"]);
 const projectRoot = path.resolve(__dirname, "..", "..", "..");
 const windowIconPath = getAssetPath(projectRoot, app.isPackaged, "icons", "app-icon.ico");
+const rendererIndexPath = app.isPackaged
+  ? path.join(__dirname, "..", "..", "dist", "index.html")
+  : path.join(projectRoot, "src", "dist", "index.html");
 
 app.setName("NellyDownloader");
 
@@ -129,7 +132,7 @@ function createMainWindow(): void {
   if (devServerUrl) {
     void mainWindow.loadURL(devServerUrl);
   } else {
-    void mainWindow.loadFile(path.join(__dirname, "..", "..", "dist", "index.html"));
+    void mainWindow.loadFile(rendererIndexPath);
   }
 
   mainWindow.webContents.once("did-finish-load", () => {
@@ -301,7 +304,8 @@ async function runSmokeTest(): Promise<void> {
           const aboutText = aboutPanel?.textContent ?? '';
           aboutReady = aboutPanel instanceof HTMLElement
             && aboutImage instanceof HTMLImageElement
-            && aboutImage.src.includes('/about/about-banner.png')
+            && aboutImage.complete
+            && aboutImage.naturalWidth > 0
             && aboutText.includes('NellyDownloader')
             && aboutText.includes('yt-dlp')
             && aboutText.includes('Zielordner');
@@ -314,13 +318,22 @@ async function runSmokeTest(): Promise<void> {
           document.querySelector('[data-action="refresh"]')?.click();
           await new Promise((resolve) => setTimeout(resolve, 350));
 
+          const isImageReady = (image) => image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0;
+          const waitForImageReady = async (selector) => {
+            for (let attempt = 0; attempt < 40; attempt += 1) {
+              const image = document.querySelector(selector);
+              if (isImageReady(image)) return image;
+              await new Promise((resolve) => setTimeout(resolve, 50));
+            }
+            return document.querySelector(selector);
+          };
           const backgroundImage = getComputedStyle(document.body, '::before').backgroundImage;
-          const heroBanner = document.querySelector('.hero-banner img');
+          const heroBanner = await waitForImageReady('.hero-banner img');
           const pageDoesNotScroll = document.documentElement.scrollHeight <= document.documentElement.clientHeight + 2
             && document.body.scrollHeight <= document.body.clientHeight + 2;
-          const emptyImage = document.querySelector('.empty-folder-state img');
+          const emptyImage = await waitForImageReady('.empty-folder-state img');
           const emptyReady = ${JSON.stringify(smokeTestEmptyState)}
-            ? emptyImage instanceof HTMLImageElement && emptyImage.src.includes('/ui/empty-files.png')
+            ? isImageReady(emptyImage)
             : true;
 
           document.querySelector('.topnav [data-action="help"]')?.click();
@@ -328,16 +341,25 @@ async function runSmokeTest(): Promise<void> {
             if (document.querySelector('[data-help-panel]')) break;
             await new Promise((resolve) => setTimeout(resolve, 50));
           }
-          const helpBanner = document.querySelector('.help-hero img');
-          const helpBannerReady = helpBanner instanceof HTMLImageElement && helpBanner.src.includes('/ui/help-banner.png');
+          const helpBanner = await waitForImageReady('.help-hero img');
+          const helpBannerReady = isImageReady(helpBanner);
           document.querySelector('[data-action="close-help"]')?.click();
 
-          visualAssetsReady = backgroundImage.includes('app-background.png')
-            && heroBanner instanceof HTMLImageElement
-            && heroBanner.src.includes('/readme/github-preview.png')
+          visualAssetsReady = backgroundImage !== 'none'
+            && isImageReady(heroBanner)
             && helpBannerReady
             && emptyReady
             && pageDoesNotScroll;
+          window.__visualSmokeDetails = {
+            backgroundImage,
+            heroReady: isImageReady(heroBanner),
+            heroSrc: heroBanner instanceof HTMLImageElement ? heroBanner.src : null,
+            helpBannerReady,
+            helpBannerSrc: helpBanner instanceof HTMLImageElement ? helpBanner.src : null,
+            emptyReady,
+            emptySrc: emptyImage instanceof HTMLImageElement ? emptyImage.src : null,
+            pageDoesNotScroll
+          };
         }
         if (${JSON.stringify(smokeTestShortcuts)}) {
           document.querySelector('[data-action="close-help"]')?.click();
@@ -553,6 +575,7 @@ async function runSmokeTest(): Promise<void> {
           hasEmptyState: Boolean(document.querySelector('.empty-folder-state img')),
           pageScrollHeight: document.documentElement.scrollHeight,
           pageClientHeight: document.documentElement.clientHeight,
+          visualSmokeDetails: window.__visualSmokeDetails ?? null,
           shortcutSmokeDetails: window.__shortcutSmokeDetails ?? null,
           helpText: document.querySelector('[data-help-panel]')?.textContent?.slice(0, 200) ?? '',
           hasHelpSearch: Boolean(document.querySelector('[data-help-search]')),

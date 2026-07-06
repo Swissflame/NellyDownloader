@@ -1,4 +1,5 @@
 import { helpChapters } from "../data/helpContent";
+import { UI_ASSETS } from "../config/assets";
 import { escapeHtml } from "../utils/html";
 
 export function renderHelpPanel(visible: boolean, searchQuery: string): string {
@@ -31,7 +32,7 @@ export function renderHelpPanel(visible: boolean, searchQuery: string): string {
           <button class="ghost-button" type="button" data-action="close-help">Schliessen</button>
         </div>
         <div class="help-hero">
-          <img src="/ui/help-banner.png" alt="" />
+          <img src="${UI_ASSETS.helpBanner}" alt="" />
           <p>NellyDownloader arbeitet lokal mit einem gewaehlten Zielordner, sicheren Dateiaktionen und optionaler WhatsApp-Kompatibilitaet.</p>
         </div>
         <label class="help-search">

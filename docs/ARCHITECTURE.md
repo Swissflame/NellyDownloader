@@ -71,9 +71,9 @@ Grafiken und Icons liegen zentral im Projektordner `assets/`:
 - `assets/installer` enthaelt vorbereitete Installer-Grafiken
 - `assets/source` enthaelt die Master-Grafik fuer das App-Icon
 
-Der Renderer bindet diese Dateien ueber Vites `publicDir: "../assets"` ein. Dadurch koennen UI-Grafiken wie `/ui/app-background.png`, `/ui/help-banner.png` und `/ui/empty-files.png` verwendet werden, ohne Bilder nach `src/` zu duplizieren.
+Der Renderer bindet sichtbare UI-Bilder ueber `src/config/assets.ts` ein. Vite erzeugt daraus robuste relative URLs, die im Dev-Server und in der installierten `file://`-App funktionieren. Die Quelldateien bleiben unter `assets/`; es werden keine Bilder nach `src/` dupliziert.
 
-Der Electron Main-Prozess setzt das Fenstericon ueber eine kleine Asset-Pfad-Hilfe aus `src/electron/assetPaths.ts`. Der Pfad basiert auf dem Projektroot und verwendet keine absoluten Entwicklerpfade.
+Der Electron Main-Prozess setzt das Fenstericon ueber eine kleine Asset-Pfad-Hilfe aus `src/electron/assetPaths.ts`. Im Dev-Modus basiert der Pfad auf dem Projektroot, im packaged Modus auf `process.resourcesPath`.
 
 Das Installer-Icon wird fuer den NSIS-Build verwendet. Header- und Sidebar-Grafiken sind vorbereitet, werden aber noch nicht eingebunden, weil die aktuelle NSIS-Konfiguration nur sichere Icon-Assets nutzt.
 
@@ -90,9 +90,9 @@ Wichtige Punkte:
 - Installer-Icon: `assets/installer/installer-icon.ico`
 - Startmenue- und Desktop-Verknuepfung werden erzeugt
 
-Der installierte Build nutzt das Icon als `extraResources` unter `resources/assets/icons/app-icon.ico`. Die Renderer-Assets werden weiterhin durch den Vite-Build in `dist/` bereitgestellt.
+Der installierte Build nutzt die Assets zusaetzlich als `extraResources` unter `resources/assets/`. Die Renderer-Bilder werden durch den Vite-Build in `dist/` bereitgestellt und dort relativ geladen.
 
-`yt-dlp`, `ffmpeg` und `ffprobe` werden in diesem Schritt noch nicht als Installer-Resources mitgeliefert. Die aktuelle Toolsuche bleibt unveraendert: gespeicherter Pfad, Entwicklungsreferenz unter `reference/Windows` und danach `PATH`.
+`yt-dlp`, `ffmpeg` und `ffprobe` werden fuer Windows aus `reference/Windows` als Installer-Resources eingebunden und liegen in der installierten App unter `resources/tools/win/`. `reference/` wird dabei nur gelesen.
 
 ## Electron Main-Prozess
 
@@ -163,8 +163,9 @@ Sicherheitsregeln:
 `yt-dlp` wird in dieser Reihenfolge gesucht:
 
 1. gespeicherter Pfad aus den Einstellungen
-2. unter Windows die Entwicklungsreferenz `reference/Windows/yt-dlp.exe`
-3. `yt-dlp` oder `yt-dlp.exe` aus dem `PATH`
+2. in der installierten Windows-App `resources/tools/win/yt-dlp.exe`
+3. im Dev-Modus unter Windows die Entwicklungsreferenz `reference/Windows/yt-dlp.exe`
+4. `yt-dlp` oder `yt-dlp.exe` aus dem `PATH`
 
 `reference/` wird dabei nur gelesen und nicht veraendert.
 
@@ -220,8 +221,9 @@ Das Verschieben passiert nur, wenn eine zusaetzliche MP4 erzeugt wurde, diese Da
 `ffprobe` und `ffmpeg` werden in dieser Reihenfolge gesucht:
 
 1. gespeicherter Pfad aus den Einstellungen
-2. unter Windows die Entwicklungsreferenz `reference/Windows/ffprobe.exe` bzw. `reference/Windows/ffmpeg.exe`
-3. `ffprobe` oder `ffmpeg` aus dem `PATH`
+2. in der installierten Windows-App `resources/tools/win/ffprobe.exe` bzw. `resources/tools/win/ffmpeg.exe`
+3. im Dev-Modus unter Windows die Entwicklungsreferenz `reference/Windows/ffprobe.exe` bzw. `reference/Windows/ffmpeg.exe`
+4. `ffprobe` oder `ffmpeg` aus dem `PATH`
 
 ## Zielordnerzugriff
 

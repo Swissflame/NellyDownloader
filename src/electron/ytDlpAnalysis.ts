@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import type { AppSettings, LinkDetails } from "../types/app";
+import { pathToolCommand, resolveBundledToolPath } from "./toolPaths";
 
 type YtDlpMetadata = {
   extractor?: string;
@@ -121,6 +122,11 @@ export async function resolveYtDlpPath(settings: AppSettings, projectRoot: strin
   }
 
   const referencePath = path.join(projectRoot, "reference", "Windows", "yt-dlp.exe");
+  const bundledTool = await resolveBundledToolPath("yt-dlp");
+
+  if (bundledTool) {
+    return bundledTool;
+  }
 
   if (process.platform === "win32" && await fileExists(referencePath)) {
     return {
@@ -129,10 +135,7 @@ export async function resolveYtDlpPath(settings: AppSettings, projectRoot: strin
     };
   }
 
-  return {
-    command: process.platform === "win32" ? "yt-dlp.exe" : "yt-dlp",
-    label: "PATH",
-  };
+  return pathToolCommand("yt-dlp");
 }
 
 export async function fileExists(filePath: string): Promise<boolean> {

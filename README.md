@@ -34,7 +34,7 @@ Die Desktop-App ist funktionsfaehig fuer Analyse, Einzel-Download, Zielordner, K
 
 Die Tastenkombinationen sind mit Standardbelegung vorbereitet und in den Einstellungen sichtbar. Freie Bearbeitung der Belegung folgt spaeter.
 
-Aktueller Entwicklungsstand: yt-dlp, ffmpeg und ffprobe werden noch nicht in den Installer aufgenommen. In der Entwicklungsfassung werden gespeicherte Tool-Pfade, `reference/Windows` und danach der `PATH` geprueft.
+Aktueller Entwicklungsstand: Der Windows-Installer nimmt `yt-dlp.exe`, `ffmpeg.exe` und `ffprobe.exe` aus `reference/Windows` als lokale Ressourcen auf. Diese Dateien bleiben im Git ignoriert. In der Entwicklungsfassung werden gespeicherte Tool-Pfade, `reference/Windows` und danach der `PATH` geprueft.
 
 ## Entwicklung
 
@@ -49,5 +49,7 @@ npm run dist:win
 ```
 
 Der Windows-Installer landet nach `npm run dist:win` unter `src/release/`. Der Ordner wird nicht committed.
+
+Fuer den Installer-Build muessen `reference/Windows/yt-dlp.exe`, `reference/Windows/ffmpeg.exe` und `reference/Windows/ffprobe.exe` lokal vorhanden sein. Sie werden beim Build nur gelesen und in den Installer aufgenommen.
 
 Die Entwicklungsreferenzen unter `reference/` duerfen nur gelesen und nicht veraendert werden.

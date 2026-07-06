@@ -41,7 +41,7 @@ body::before {
   content: "";
   background:
     linear-gradient(180deg, rgba(13, 16, 22, 0.18), rgba(13, 16, 22, 0.72)),
-    url("/ui/app-background.png") center right / cover no-repeat;
+    var(--app-background-image) center right / cover no-repeat;
   opacity: 0.54;
 }
 

@@ -1,3 +1,4 @@
+import { UI_ASSETS } from "../config/assets";
 import { escapeHtml } from "../utils/html";
 
 export function renderAboutPanel(visible: boolean, version: string): string {
@@ -8,7 +9,7 @@ export function renderAboutPanel(visible: boolean, version: string): string {
   return `
     <div class="settings-backdrop" data-about-panel>
       <section class="panel compact-panel about-panel" aria-labelledby="about-heading" role="dialog" aria-modal="true">
-        <img class="about-banner" src="/about/about-banner.png" alt="NellyDownloader" />
+        <img class="about-banner" src="${UI_ASSETS.aboutBanner}" alt="NellyDownloader" />
         <div class="panel-heading">
           <div>
             <p class="eyebrow">Info</p>

@@ -32,8 +32,17 @@
     ],
     "extraResources": [
       {
-        "from": "../assets/icons/app-icon.ico",
-        "to": "assets/icons/app-icon.ico"
+        "from": "../assets",
+        "to": "assets"
+      },
+      {
+        "from": "../reference/Windows",
+        "to": "tools/win",
+        "filter": [
+          "yt-dlp.exe",
+          "ffmpeg.exe",
+          "ffprobe.exe"
+        ]
       }
     ],
     "extraMetadata": {

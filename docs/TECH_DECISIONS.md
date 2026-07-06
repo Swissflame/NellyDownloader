@@ -138,9 +138,9 @@ Begruendung:
 Begruendung:
 
 - Icons, UI-Grafiken, About-Grafiken, README-Vorschau und spaetere Installer-Grafiken bleiben an einem Ort unter `assets/`
-- der Renderer kann Assets ueber Vites `publicDir` verwenden, ohne Dateien nach `src/` zu kopieren
-- der Electron Main-Prozess nutzt eine Asset-Pfad-Hilfe statt hart codierter absoluter Pfade
-- Installer-Assets sind vorbereitet, aber noch nicht in einen Installer-Build eingebunden
+- der Renderer verwendet `src/config/assets.ts`, damit Vite robuste URLs fuer Dev-Server und packaged `file://`-App erzeugt
+- der Electron Main-Prozess nutzt eine Asset-Pfad-Hilfe mit `process.resourcesPath` fuer packaged Builds
+- Installer-Assets sind vorbereitet; App- und Installer-Icons sind im Build eingebunden
 
 ## Entscheidung 14: Shortcuts im Renderer statt neue Logik
 
@@ -169,4 +169,5 @@ Begruendung:
 - NSIS erzeugt einen normalen Windows-Installer mit Startmenue- und Desktop-Verknuepfung
 - App-Icon und Installer-Icon koennen aus den vorhandenen Assets verwendet werden
 - Build-Artefakte landen in `src/release/` und werden nicht committed
-- externe Tool-Binaries werden noch nicht mitgeliefert, damit die bestehende Toolsuche unveraendert bleibt
+- Windows-Tools werden aus `reference/Windows` als `extraResources` unter `resources/tools/win/` mitgeliefert
+- im Dev-Modus bleibt die Suche ueber gespeicherte Pfade, `reference/Windows` und `PATH` erhalten
