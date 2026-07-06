@@ -1,6 +1,7 @@
 {
   "name": "nelly-downloader-ui",
   "version": "0.1.0",
+  "productName": "NellyDownloader",
   "private": true,
   "type": "module",
   "main": "dist-electron/electron/main.cjs",

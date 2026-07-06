@@ -65,6 +65,8 @@ export type AppState = {
   settingsVisible: boolean;
   helpVisible: boolean;
   helpSearch: string;
+  aboutVisible: boolean;
+  appVersion: string;
   analysisInProgress: boolean;
   downloadInProgress: boolean;
 };

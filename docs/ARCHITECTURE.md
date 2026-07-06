@@ -37,6 +37,22 @@ Der Hilfe-Bereich ist ein durchsuchbares Handbuch im Renderer. Die Inhalte werde
 
 Die Suche filtert Kapitel nach Titel, Text und Stichworten. Treffer werden im sichtbaren Text markiert. Wenn kein Kapitel passt, zeigt die UI eine freundliche Leermeldung.
 
+## Assets und Grafiken
+
+Grafiken und Icons liegen zentral im Projektordner `assets/`:
+
+- `assets/icons` enthaelt das Windows-Fenstericon und PNG-Favicons
+- `assets/about` enthaelt Bilder fuer Hilfe und Info-Dialog
+- `assets/readme` enthaelt die GitHub-/README-Vorschau
+- `assets/installer` enthaelt vorbereitete Installer-Grafiken
+- `assets/source` enthaelt die Master-Grafik fuer das App-Icon
+
+Der Renderer bindet diese Dateien ueber Vites `publicDir: "../assets"` ein. Dadurch koennen Hilfe und Info-Dialog Bilder wie `/about/about-banner.png` verwenden, ohne Bilder nach `src/` zu duplizieren.
+
+Der Electron Main-Prozess setzt das Fenstericon ueber eine kleine Asset-Pfad-Hilfe aus `src/electron/assetPaths.ts`. Der Pfad basiert auf dem Projektroot und verwendet keine absoluten Entwicklerpfade.
+
+Die Installer-Assets sind vorbereitet, werden aber noch nicht fuer einen Installer-Build verwendet.
+
 ## Electron Main-Prozess
 
 Datei:
@@ -73,6 +89,7 @@ Der Preload stellt ueber `contextBridge` die globale API `window.nelly` bereit. 
 API-Methoden:
 
 - `getAppVersion()`
+- `readClipboardText()`
 - `getSettings()`
 - `saveSettings(settings)`
 - `selectTargetFolder()`

@@ -42,9 +42,15 @@ function render(): void {
 
 async function initializeApp(): Promise<void> {
   try {
+    const [settings, appVersion] = await Promise.all([
+      localApi.getSettings(),
+      localApi.getAppVersion(),
+    ]);
+
     state = {
       ...state,
-      settings: await localApi.getSettings(),
+      settings,
+      appVersion,
     };
     render();
     await refreshTargetFolder();
@@ -192,6 +198,14 @@ async function handleAction(action: string): Promise<void> {
       return;
     case "close-help":
       state = { ...state, helpVisible: false, helpSearch: "" };
+      render();
+      return;
+    case "about":
+      state = { ...state, aboutVisible: true };
+      render();
+      return;
+    case "close-about":
+      state = { ...state, aboutVisible: false };
       render();
       return;
     default:

@@ -10,6 +10,7 @@ export function renderTopbar(): string {
       <nav class="topnav" aria-label="Hauptmenü">
         <button class="ghost-button" data-action="settings" type="button">Einstellungen</button>
         <button class="ghost-button" data-action="help" type="button">Hilfe</button>
+        <button class="ghost-button" data-action="about" type="button">Info</button>
       </nav>
     </header>
   `;

@@ -14,6 +14,8 @@ export const initialState: AppState = {
   settingsVisible: false,
   helpVisible: false,
   helpSearch: "",
+  aboutVisible: false,
+  appVersion: "dev",
   analysisInProgress: false,
   downloadInProgress: false,
 };

@@ -29,6 +29,10 @@ export function renderHelpPanel(visible: boolean, searchQuery: string): string {
           </div>
           <button class="ghost-button" type="button" data-action="close-help">Schliessen</button>
         </div>
+        <div class="help-hero">
+          <img src="/about/about-banner.png" alt="" />
+          <p>NellyDownloader arbeitet lokal mit einem gewaehlten Zielordner, sicheren Dateiaktionen und optionaler WhatsApp-Kompatibilitaet.</p>
+        </div>
         <label class="help-search">
           <span class="visually-hidden">Hilfe durchsuchen</span>
           <input data-help-search type="search" value="${escapeHtml(searchQuery)}" placeholder="Hilfe durchsuchen" autocomplete="off" />

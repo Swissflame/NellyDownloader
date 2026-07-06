@@ -4,6 +4,7 @@ import type { BrowserWindow as BrowserWindowInstance, OpenDialogOptions } from "
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import type { AppSettings, DownloadProgressEvent, OutputFile, TargetFolderState } from "../types/app";
+import { getAssetPath } from "./assetPaths";
 import { copyTargetFilesToClipboard } from "./fileClipboard";
 import { moveTargetFilesToTrash } from "./fileTrash";
 import { analyzeLinkWithYtDlp } from "./ytDlpAnalysis";
@@ -21,8 +22,12 @@ const smokeTestTrash = process.env.NELLY_ELECTRON_TEST_TRASH === "1";
 const smokeTestHelp = process.env.NELLY_ELECTRON_TEST_HELP === "1";
 const smokeTestClipboardDownload = process.env.NELLY_ELECTRON_TEST_CLIPBOARD_DOWNLOAD === "1";
 const smokeTestClipboardText = process.env.NELLY_ELECTRON_TEST_CLIPBOARD_TEXT;
+const smokeTestAbout = process.env.NELLY_ELECTRON_TEST_ABOUT === "1";
 const supportedExtensions = new Set(["mp4", "mkv", "webm", "mov", "avi", "mp3", "m4a", "wav", "opus"]);
 const projectRoot = path.resolve(__dirname, "..", "..", "..");
+const windowIconPath = getAssetPath(projectRoot, "icons", "app-icon.ico");
+
+app.setName("NellyDownloader");
 
 if (smokeTestUserData) {
   app.setPath("userData", smokeTestUserData);
@@ -98,6 +103,7 @@ function createMainWindow(): void {
     minWidth: 860,
     minHeight: 640,
     title: "Nelly Downloader",
+    icon: windowIconPath,
     backgroundColor: "#101114",
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
@@ -152,6 +158,7 @@ async function runSmokeTest(): Promise<void> {
         let settingsReady = true;
         let trashReady = true;
         let helpReady = true;
+        let aboutReady = true;
         let clipboardDownloadReady = true;
         if (${JSON.stringify(smokeTestSettings)}) {
           const changedSettings = await window.nelly.saveSettings({
@@ -265,6 +272,25 @@ async function runSmokeTest(): Promise<void> {
           }
           helpReady = panelVisible && termResults.length === terms.length && termResults.every(Boolean);
         }
+        if (${JSON.stringify(smokeTestAbout)}) {
+          document.querySelector('[data-action="close-help"]')?.click();
+          document.querySelector('[data-action="close-settings"]')?.click();
+          await new Promise((resolve) => setTimeout(resolve, 150));
+          document.querySelector('.topnav [data-action="about"]')?.click();
+          for (let attempt = 0; attempt < 40; attempt += 1) {
+            if (document.querySelector('[data-about-panel]')) break;
+            await new Promise((resolve) => setTimeout(resolve, 50));
+          }
+          const aboutPanel = document.querySelector('[data-about-panel]');
+          const aboutImage = document.querySelector('[data-about-panel] img');
+          const aboutText = aboutPanel?.textContent ?? '';
+          aboutReady = aboutPanel instanceof HTMLElement
+            && aboutImage instanceof HTMLImageElement
+            && aboutImage.src.includes('/about/about-banner.png')
+            && aboutText.includes('NellyDownloader')
+            && aboutText.includes('yt-dlp')
+            && aboutText.includes('Zielordner');
+        }
         if (${JSON.stringify(smokeTestClipboardDownload)}) {
           document.querySelector('[data-action="close-help"]')?.click();
           await new Promise((resolve) => setTimeout(resolve, 150));
@@ -301,6 +327,7 @@ async function runSmokeTest(): Promise<void> {
           && settingsReady
           && trashReady
           && helpReady
+          && aboutReady
           && clipboardDownloadReady;
       })()
     `
@@ -332,7 +359,9 @@ async function runSmokeTest(): Promise<void> {
           hasNelly: typeof window.nelly,
           hasSettingsButton: Boolean(document.querySelector('[data-action="settings"]')),
           hasHelpButton: Boolean(document.querySelector('[data-action="help"]')),
+          hasAboutButton: Boolean(document.querySelector('[data-action="about"]')),
           hasHelpPanel: Boolean(document.querySelector('[data-help-panel]')),
+          hasAboutPanel: Boolean(document.querySelector('[data-about-panel]')),
           helpText: document.querySelector('[data-help-panel]')?.textContent?.slice(0, 200) ?? '',
           hasHelpSearch: Boolean(document.querySelector('[data-help-search]')),
           settingsPanel: Boolean(document.querySelector('[data-settings-panel]')),
