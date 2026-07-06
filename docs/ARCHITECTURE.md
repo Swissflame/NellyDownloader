@@ -76,7 +76,7 @@ API-Methoden:
 - `analyzeLink(url)`
 - `startDownload(url)`
 
-`getSettings`, `saveSettings`, `selectTargetFolder`, `listTargetFolder`, `analyzeLink` und `startDownload` arbeiten bereits lokal. `copySelectedFiles` und `deleteSelectedFiles` sind absichtlich noch sichere Platzhalter.
+`getSettings`, `saveSettings`, `selectTargetFolder`, `listTargetFolder`, `analyzeLink`, `startDownload` und `copySelectedFiles` arbeiten bereits lokal. `deleteSelectedFiles` ist absichtlich noch ein sicherer Platzhalter.
 
 ## Link-Analyse
 
@@ -138,7 +138,21 @@ Unterstuetzte Dateitypen:
 
 Der Renderer erhaelt nur strukturierte Daten mit Dateiname, Groesse, Aenderungsdatum und Typ. Wenn der Ordner leer ist oder nicht existiert, liefert der Main-Prozess eine deutschsprachige Meldung.
 
-Kopieren und Loeschen sind sichtbar, aber absichtlich deaktiviert und fuehren keine Dateiaktionen aus.
+## Dateien Kopieren
+
+`Ausgewaehlte kopieren` ist aktiv. Der Renderer sendet nur die Dateinamen der ausgewaehlten Zielordner-Dateien. Der Main-Prozess prueft:
+
+- mindestens eine Datei wurde ausgewaehlt
+- jede Auswahl ist ein Dateiname und kein freier Pfad
+- die Datei liegt im aktuell gespeicherten Zielordner
+- die Datei existiert
+- die Datei ist eine normale Datei und kein Ordner
+
+Unter Windows wird zuerst versucht, die Dateien mit `Set-Clipboard -LiteralPath` als echte Dateiablage in die Zwischenablage zu legen. Wenn das nicht funktioniert oder auf anderen Plattformen, werden die vollstaendigen Dateipfade als Text in die Zwischenablage geschrieben.
+
+Beim Kopieren werden Dateien nicht veraendert, nicht verschoben und nicht geloescht.
+
+Loeschen ist sichtbar, aber absichtlich deaktiviert und fuehrt keine Dateiaktion aus.
 
 ## Lokale Workflows
 

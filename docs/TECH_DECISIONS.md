@@ -80,7 +80,18 @@ Begruendung:
 - Instagram nutzt dieselbe Cookie-Strategie wie die Analyse
 - Fortschritt wird nur als strukturiertes Event an den Renderer geschickt
 
-## Entscheidung 8: WhatsApp-Ausgabe ueber Temp
+## Entscheidung 8: Kopieren ueber System-Zwischenablage
+
+Begruendung:
+
+- der Renderer sendet nur Dateinamen, keine freien Pfade
+- der Main-Prozess validiert Zielordner, Existenz und Dateityp
+- Dateien werden nicht veraendert, verschoben oder geloescht
+- Windows versucht echte Datei-Zwischenablage ueber `Set-Clipboard -LiteralPath`
+- Fallback ist Text mit vollstaendigen Dateipfaden
+- macOS/Linux verwenden vorerst den Textpfad-Fallback
+
+## Entscheidung 9: WhatsApp-Ausgabe ueber Temp
 
 Begruendung:
 
@@ -88,7 +99,7 @@ Begruendung:
 - Benutzer sieht nur die fertige Datei
 - Original-Zwischendateien koennen entfernt werden
 
-## Entscheidung 9: Windows-Version als funktionale Referenz
+## Entscheidung 10: Windows-Version als funktionale Referenz
 
 Begruendung:
 

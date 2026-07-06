@@ -3,6 +3,7 @@ import type { BrowserWindow as BrowserWindowInstance, OpenDialogOptions } from "
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import type { AppSettings, DownloadProgressEvent, OutputFile, TargetFolderState } from "../types/app";
+import { copyTargetFilesToClipboard } from "./fileClipboard";
 import { analyzeLinkWithYtDlp } from "./ytDlpAnalysis";
 import { downloadLinkWithYtDlp } from "./ytDlpDownload";
 
@@ -12,6 +13,7 @@ const smokeTestTargetFolder = process.env.NELLY_ELECTRON_TEST_TARGET_FOLDER;
 const smokeTestUserData = process.env.NELLY_ELECTRON_TEST_USER_DATA;
 const smokeTestAnalyzeUrl = process.env.NELLY_ELECTRON_TEST_ANALYZE_URL;
 const smokeTestDownloadUrl = process.env.NELLY_ELECTRON_TEST_DOWNLOAD_URL;
+const smokeTestCopy = process.env.NELLY_ELECTRON_TEST_COPY === "1";
 const supportedExtensions = new Set(["mp4", "mkv", "webm", "mov", "avi", "mp3", "m4a", "wav", "opus"]);
 const projectRoot = path.resolve(__dirname, "..", "..", "..");
 
@@ -134,6 +136,7 @@ async function runSmokeTest(): Promise<void> {
         const folder = await window.nelly.listTargetFolder();
         let analysisReady = true;
         let downloadReady = true;
+        let copyReady = true;
         if (${JSON.stringify(Boolean(smokeTestAnalyzeUrl))}) {
           document.querySelector('[data-action="close-settings"]')?.click();
           const input = document.querySelector('#download-link');
@@ -158,13 +161,25 @@ async function runSmokeTest(): Promise<void> {
           const statusText = document.querySelector('[data-status]')?.textContent ?? '';
           downloadReady = statusText.includes('Download abgeschlossen') && afterDownload.files.length > beforeDownload.files.length;
         }
+        if (${JSON.stringify(smokeTestCopy)}) {
+          const noSelection = await window.nelly.copySelectedFiles([]);
+          const refreshedFolder = await window.nelly.listTargetFolder();
+          const ids = refreshedFolder.files.slice(0, 2).map((file) => file.id);
+          const oneFile = await window.nelly.copySelectedFiles(ids.slice(0, 1));
+          const multipleFiles = await window.nelly.copySelectedFiles(ids);
+          copyReady = noSelection.copied === false
+            && oneFile.copied === true
+            && multipleFiles.copied === true
+            && ids.length >= 2;
+        }
         return settingsPanelVisible
           && saved.saved === true
           && reloadedSettings.targetFolder === ${JSON.stringify(smokeTestTargetFolder)}
           && folder.folderExists === true
           && folder.files.some((file) => file.name === "electron-test.mp4")
           && analysisReady
-          && downloadReady;
+          && downloadReady
+          && copyReady;
       })()
     `
     : `
@@ -226,7 +241,7 @@ async function listTargetFolder(): Promise<TargetFolderState> {
       const stats = await fs.stat(filePath);
 
       files.push({
-        id: filePath,
+        id: entry.name,
         name: entry.name,
         size: formatBytes(stats.size),
         date: formatDate(stats.mtime),
@@ -334,11 +349,10 @@ function registerIpc(): void {
 
   ipcMain.handle("folder:list-target", () => listTargetFolder());
 
-  ipcMain.handle("files:copy-selected", (_event, fileIds: string[]) => ({
-    copied: false,
-    fileIds,
-    message: "Kopieren ist noch deaktiviert und führt keine Dateiaktion aus.",
-  }));
+  ipcMain.handle("files:copy-selected", async (_event, fileIds: string[]) => {
+    const settings = await readSettings();
+    return copyTargetFilesToClipboard(fileIds, settings.targetFolder);
+  });
 
   ipcMain.handle("files:delete-selected", (_event, fileIds: string[]) => ({
     deleted: false,

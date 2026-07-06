@@ -28,10 +28,11 @@ Aktuell aktiv:
 - Playlists sind deaktiviert
 - bestehende Dateien werden nicht ueberschrieben
 - Instagram kann Browser-Cookies verwenden
+- ausgewaehlte Dateien koennen in die System-Zwischenablage kopiert werden
+- Dateien werden beim Kopieren nicht veraendert
 
 Noch nicht aktiv:
 
-- Kopieren ausgewaehlter Dateien
 - Loeschen ausgewaehlter Dateien
 - eigene WhatsApp-/ffmpeg-Konvertierung
 

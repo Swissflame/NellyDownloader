@@ -188,15 +188,22 @@ async function selectTargetFolder(): Promise<void> {
 }
 
 async function showFileActionPlaceholder(action: "copy" | "delete"): Promise<void> {
-  const selectedFileIds = getSelectedFileIds();
-  const result = action === "copy"
-    ? await localApi.copySelectedFiles(selectedFileIds)
-    : await localApi.deleteSelectedFiles(selectedFileIds);
+  try {
+    const selectedFileIds = getSelectedFileIds();
+    const result = action === "copy"
+      ? await localApi.copySelectedFiles(selectedFileIds)
+      : await localApi.deleteSelectedFiles(selectedFileIds);
 
-  showDialog({
-    title: action === "copy" ? "Kopieren" : "Löschen",
-    text: result.message,
-  });
+    showDialog({
+      title: action === "copy" ? "Kopieren" : "Löschen",
+      text: result.message,
+    });
+  } catch (error) {
+    showDialog({
+      title: action === "copy" ? "Kopieren" : "Löschen",
+      text: error instanceof Error ? error.message : "Die Dateiaktion ist fehlgeschlagen.",
+    });
+  }
 }
 
 function getSelectedFileIds(): string[] {

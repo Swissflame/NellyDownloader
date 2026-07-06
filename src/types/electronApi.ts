@@ -19,6 +19,7 @@ export type FileActionResult = PlaceholderResult & {
   copied?: boolean;
   deleted?: boolean;
   fileIds: string[];
+  mode?: "files" | "paths";
 };
 
 export type StartDownloadResult = PlaceholderResult & {
