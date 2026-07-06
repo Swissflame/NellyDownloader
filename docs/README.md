@@ -11,15 +11,29 @@ Die App lädt Videos von unterstützten Plattformen über `yt-dlp`, verarbeitet 
 - Windows 10 / 11
 - macOS Apple Silicon und Intel, soweit mit Tooling sinnvoll möglich
 
-## Geplante Technik
+## Aktuelle Technik
 
-- Frontend/App Shell: Tauri
-- Backend/Core: Rust
+- Frontend/App Shell: Electron mit Vite/TypeScript
+- Lokaler Core: Electron Main-Prozess
 - UI: HTML / CSS / TypeScript
 - Externe Tools:
   - yt-dlp
   - ffmpeg
   - ffprobe
+
+Aktuell aktiv:
+
+- Link-Analyse mit `yt-dlp`
+- sicherer Einzel-Download mit `yt-dlp`
+- Playlists sind deaktiviert
+- bestehende Dateien werden nicht ueberschrieben
+- Instagram kann Browser-Cookies verwenden
+
+Noch nicht aktiv:
+
+- Kopieren ausgewaehlter Dateien
+- Loeschen ausgewaehlter Dateien
+- eigene WhatsApp-/ffmpeg-Konvertierung
 
 ## Hauptfunktionen
 

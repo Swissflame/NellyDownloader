@@ -12,7 +12,7 @@ export function renderApp(state: AppState): string {
   return `
     <main class="shell" aria-label="Nelly Downloader">
       ${renderTopbar()}
-      ${renderLinkInput(state.linkInput, state.analysisInProgress)}
+      ${renderLinkInput(state.linkInput, state.analysisInProgress || state.downloadInProgress)}
 
       <div class="content-grid">
         ${renderLinkDetails(state.linkDetails)}

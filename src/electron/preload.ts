@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
-import type { AppSettings } from "../types/app";
+import type { AppSettings, DownloadProgressEvent } from "../types/app";
 import type { ElectronApi } from "../types/electronApi";
 
 const electronApi: ElectronApi = {
@@ -15,6 +15,17 @@ const electronApi: ElectronApi = {
     return ipcRenderer.invoke("link:analyze", url);
   },
   startDownload: (url: string) => ipcRenderer.invoke("download:start", url),
+  onDownloadProgress: (callback: (event: DownloadProgressEvent) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, progress: DownloadProgressEvent) => {
+      callback(progress);
+    };
+
+    ipcRenderer.on("download:progress", listener);
+
+    return () => {
+      ipcRenderer.removeListener("download:progress", listener);
+    };
+  },
 };
 
 contextBridge.exposeInMainWorld("nelly", electronApi);

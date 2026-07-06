@@ -2,7 +2,7 @@ import { escapeHtml } from "../utils/html";
 
 export function renderLinkInput(linkInput: string, disabled: boolean): string {
   const disabledAttribute = disabled ? "disabled" : "";
-  const buttonText = disabled ? "Analysiere..." : "Download starten";
+  const buttonText = disabled ? "Bitte warten..." : "Download starten";
 
   return `
     <section class="link-panel" aria-labelledby="link-heading">
@@ -29,7 +29,7 @@ export function bindLinkInput(): void {
     document.dispatchEvent(
       new CustomEvent("nelly:placeholder-action", {
         detail: {
-          action: "analyze",
+          action: "download",
           url: linkInput?.value ?? "",
         },
       }),

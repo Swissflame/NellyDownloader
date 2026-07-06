@@ -17,12 +17,12 @@ type YtDlpMetadata = {
   thumbnails?: Array<{ url?: string }>;
 };
 
-type YtDlpCommand = {
+export type YtDlpCommand = {
   command: string;
   label: string;
 };
 
-type AuthAttempt = {
+export type AuthAttempt = {
   label: string;
   args: string[];
 };
@@ -67,7 +67,7 @@ export async function analyzeLinkWithYtDlp(
   };
 }
 
-function validateUrl(rawUrl: string): string {
+export function validateUrl(rawUrl: string): string {
   try {
     const parsedUrl = new URL(rawUrl.trim());
 
@@ -85,7 +85,7 @@ function validateUrl(rawUrl: string): string {
   }
 }
 
-function cleanAnalysisUrl(rawUrl: string): string {
+export function cleanAnalysisUrl(rawUrl: string): string {
   const parsedUrl = new URL(rawUrl);
 
   if (!isInstagramUrl(parsedUrl)) {
@@ -103,12 +103,12 @@ function cleanAnalysisUrl(rawUrl: string): string {
   return parsedUrl.toString();
 }
 
-function isInstagramUrl(parsedUrl: URL): boolean {
+export function isInstagramUrl(parsedUrl: URL): boolean {
   const hostParts = parsedUrl.hostname.toLowerCase().split(".");
   return hostParts.slice(-2).join(".") === "instagram.com";
 }
 
-async function resolveYtDlpPath(settings: AppSettings, projectRoot: string): Promise<YtDlpCommand> {
+export async function resolveYtDlpPath(settings: AppSettings, projectRoot: string): Promise<YtDlpCommand> {
   if (settings.ytDlpPath) {
     if (await fileExists(settings.ytDlpPath)) {
       return {
@@ -135,7 +135,7 @@ async function resolveYtDlpPath(settings: AppSettings, projectRoot: string): Pro
   };
 }
 
-async function fileExists(filePath: string): Promise<boolean> {
+export async function fileExists(filePath: string): Promise<boolean> {
   try {
     const stats = await fs.stat(filePath);
     return stats.isFile();
@@ -185,7 +185,7 @@ async function runYtDlpMetadata(
   throw new Error(formatAnalysisFailure(url, failures));
 }
 
-async function buildAuthAttempts(
+export async function buildAuthAttempts(
   url: string,
   settings: AppSettings,
   projectRoot: string,
@@ -240,7 +240,7 @@ function resolveBrowserAttempts(browserSetting: string): AuthAttempt[] {
   }];
 }
 
-function spawnForText(command: string, args: string[]): Promise<string> {
+export function spawnForText(command: string, args: string[], timeoutMs = analysisTimeoutMs): Promise<string> {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       shell: false,
@@ -254,7 +254,7 @@ function spawnForText(command: string, args: string[]): Promise<string> {
     const timeout = setTimeout(() => {
       timedOut = true;
       child.kill();
-    }, analysisTimeoutMs);
+    }, timeoutMs);
 
     child.stdout.setEncoding("utf-8");
     child.stdout.on("data", (chunk: string) => {

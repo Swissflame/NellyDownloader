@@ -62,13 +62,25 @@ Aktueller Stand:
 
 - `yt-dlp` wird bereits fuer Link-Metadaten genutzt
 - Aufruf nur mit `--dump-json --no-playlist --skip-download`
-- keine Downloads und keine Zielordner-Schreibzugriffe
 - Suche ueber gespeicherten Pfad, Windows-Referenzdatei und `PATH`
 - Instagram nutzt bei Bedarf die Cookie-Strategie der alten Referenzversion
 - Browser-Cookies werden mit `--cookies-from-browser` und sauberer Argumentliste versucht
 - Tracking-Parameter werden fuer Instagram-Reel/Post-Links vor der Analyse entfernt
 
-## Entscheidung 7: WhatsApp-Ausgabe ueber Temp
+## Entscheidung 7: Sicherer Einzel-Download
+
+Begruendung:
+
+- der Download bleibt im Electron Main-Prozess
+- der Renderer hat weiterhin keinen direkten Node- oder Dateisystemzugriff
+- `yt-dlp` wird mit `spawn` und Argumentliste gestartet
+- Playlists sind deaktiviert
+- bestehende Dateien werden nicht ueberschrieben
+- der Dateiname enthaelt Titel, ID und Zeitstempel
+- Instagram nutzt dieselbe Cookie-Strategie wie die Analyse
+- Fortschritt wird nur als strukturiertes Event an den Renderer geschickt
+
+## Entscheidung 8: WhatsApp-Ausgabe ueber Temp
 
 Begruendung:
 
@@ -76,7 +88,7 @@ Begruendung:
 - Benutzer sieht nur die fertige Datei
 - Original-Zwischendateien koennen entfernt werden
 
-## Entscheidung 8: Windows-Version als funktionale Referenz
+## Entscheidung 9: Windows-Version als funktionale Referenz
 
 Begruendung:
 

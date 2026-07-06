@@ -2,14 +2,16 @@ import { app, BrowserWindow, dialog, ipcMain } from "electron/main";
 import type { BrowserWindow as BrowserWindowInstance, OpenDialogOptions } from "electron/main";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import type { AppSettings, OutputFile, TargetFolderState } from "../types/app";
+import type { AppSettings, DownloadProgressEvent, OutputFile, TargetFolderState } from "../types/app";
 import { analyzeLinkWithYtDlp } from "./ytDlpAnalysis";
+import { downloadLinkWithYtDlp } from "./ytDlpDownload";
 
 const devServerUrl = process.env.NELLY_ELECTRON_DEV_URL;
 const isSmokeTest = process.env.NELLY_ELECTRON_SMOKE_TEST === "1";
 const smokeTestTargetFolder = process.env.NELLY_ELECTRON_TEST_TARGET_FOLDER;
 const smokeTestUserData = process.env.NELLY_ELECTRON_TEST_USER_DATA;
 const smokeTestAnalyzeUrl = process.env.NELLY_ELECTRON_TEST_ANALYZE_URL;
+const smokeTestDownloadUrl = process.env.NELLY_ELECTRON_TEST_DOWNLOAD_URL;
 const supportedExtensions = new Set(["mp4", "mkv", "webm", "mov", "avi", "mp3", "m4a", "wav", "opus"]);
 const projectRoot = path.resolve(__dirname, "..", "..", "..");
 
@@ -18,6 +20,7 @@ if (smokeTestUserData) {
 }
 
 let mainWindow: BrowserWindowInstance | null = null;
+let downloadRunning = false;
 
 function getDefaultSettings(): AppSettings {
   return {
@@ -130,26 +133,38 @@ async function runSmokeTest(): Promise<void> {
         const reloadedSettings = await window.nelly.getSettings();
         const folder = await window.nelly.listTargetFolder();
         let analysisReady = true;
+        let downloadReady = true;
         if (${JSON.stringify(Boolean(smokeTestAnalyzeUrl))}) {
           document.querySelector('[data-action="close-settings"]')?.click();
           const input = document.querySelector('#download-link');
           if (!(input instanceof HTMLInputElement)) return false;
           input.value = ${JSON.stringify(smokeTestAnalyzeUrl ?? "")};
+          const details = await window.nelly.analyzeLink(${JSON.stringify(smokeTestAnalyzeUrl ?? "")});
+          analysisReady = details.title.includes('Rick Astley') || details.platform.includes('Youtube');
+        }
+        if (${JSON.stringify(Boolean(smokeTestDownloadUrl))}) {
+          document.querySelector('[data-action="close-settings"]')?.click();
+          const beforeDownload = await window.nelly.listTargetFolder();
+          const input = document.querySelector('#download-link');
+          if (!(input instanceof HTMLInputElement)) return false;
+          input.value = ${JSON.stringify(smokeTestDownloadUrl ?? "")};
           document.querySelector('.link-form')?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-          for (let attempt = 0; attempt < 240; attempt += 1) {
-            const detailsText = document.querySelector('.details-panel')?.textContent ?? '';
-            if (detailsText.includes('Analyse abgeschlossen') || detailsText.includes('Rick Astley') || detailsText.includes('Youtube')) break;
-            await new Promise((resolve) => setTimeout(resolve, 250));
+          for (let attempt = 0; attempt < 360; attempt += 1) {
+            const statusText = document.querySelector('[data-status]')?.textContent ?? '';
+            if (statusText.includes('Download abgeschlossen') || statusText.includes('Download fehlgeschlagen')) break;
+            await new Promise((resolve) => setTimeout(resolve, 500));
           }
-          const detailsText = document.querySelector('.details-panel')?.textContent ?? '';
-          analysisReady = detailsText.includes('Rick Astley') || detailsText.includes('Youtube');
+          const afterDownload = await window.nelly.listTargetFolder();
+          const statusText = document.querySelector('[data-status]')?.textContent ?? '';
+          downloadReady = statusText.includes('Download abgeschlossen') && afterDownload.files.length > beforeDownload.files.length;
         }
         return settingsPanelVisible
           && saved.saved === true
           && reloadedSettings.targetFolder === ${JSON.stringify(smokeTestTargetFolder)}
           && folder.folderExists === true
           && folder.files.some((file) => file.name === "electron-test.mp4")
-          && analysisReady;
+          && analysisReady
+          && downloadReady;
       })()
     `
     : `
@@ -343,11 +358,42 @@ function registerIpc(): void {
     }
   });
 
-  ipcMain.handle("download:start", (_event, url: string) => ({
-    started: false,
-    url,
-    message: "Download ist vorbereitet, ruft aber noch keine externen Tools auf.",
-  }));
+  ipcMain.handle("download:start", async (event, url: string) => {
+    if (downloadRunning) {
+      throw new Error("Es laeuft bereits ein Download. Bitte warte, bis er abgeschlossen ist.");
+    }
+
+    downloadRunning = true;
+    const settings = await readSettings();
+    const sendProgress = (progress: DownloadProgressEvent) => {
+      event.sender.send("download:progress", progress);
+    };
+
+    try {
+      const result = await downloadLinkWithYtDlp(url, settings, projectRoot, sendProgress);
+
+      return {
+        started: true,
+        url: result.url,
+        outputPath: result.outputPath,
+        message: result.outputPath
+          ? `Download abgeschlossen: ${path.basename(result.outputPath)}`
+          : "Download abgeschlossen. Die neue Datei konnte nicht eindeutig zugeordnet werden.",
+      };
+    } catch (error) {
+      sendProgress({
+        phase: "error",
+        total: 0,
+        download: 0,
+        conversion: 0,
+        status: "Download fehlgeschlagen",
+      });
+      console.error("yt-dlp Download fehlgeschlagen", error);
+      throw error;
+    } finally {
+      downloadRunning = false;
+    }
+  });
 }
 
 registerIpc();

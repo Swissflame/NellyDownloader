@@ -76,7 +76,7 @@ API-Methoden:
 - `analyzeLink(url)`
 - `startDownload(url)`
 
-`getSettings`, `saveSettings`, `selectTargetFolder`, `listTargetFolder` und `analyzeLink` arbeiten bereits lokal. `copySelectedFiles`, `deleteSelectedFiles` und `startDownload` sind absichtlich noch sichere Platzhalter.
+`getSettings`, `saveSettings`, `selectTargetFolder`, `listTargetFolder`, `analyzeLink` und `startDownload` arbeiten bereits lokal. `copySelectedFiles` und `deleteSelectedFiles` sind absichtlich noch sichere Platzhalter.
 
 ## Link-Analyse
 
@@ -101,6 +101,24 @@ Sicherheitsregeln:
 3. `yt-dlp` oder `yt-dlp.exe` aus dem `PATH`
 
 `reference/` wird dabei nur gelesen und nicht veraendert.
+
+## Einzel-Download
+
+Der Download laeuft im Electron Main-Prozess. Der Renderer startet ihn nur ueber `window.nelly.startDownload(url)` und erhaelt Fortschritt ueber die Preload-API.
+
+Aktuelle Regeln:
+
+- es wird genau ein Link verarbeitet
+- Playlists sind mit `--no-playlist` deaktiviert
+- `yt-dlp` wird mit `spawn` ohne Shell gestartet
+- Zielordner kommt aus den gespeicherten Einstellungen
+- bestehende Dateien werden mit `--no-overwrites` nicht ueberschrieben
+- der Ausgabename enthaelt Titel, Video-ID und einen Laufzeit-Zeitstempel
+- MP4/H.264/AAC wird ueber Sortierung bevorzugt
+- Instagram nutzt dieselbe Browser-Cookie-Strategie wie die Analyse
+- Kopieren und Loeschen bleiben deaktiviert
+
+Der Renderer zeigt Download-Fortschritt aus der yt-dlp-Ausgabe an. Eine moegliche Zusammenfuehrung durch yt-dlp wird als vorlaeufiger Umwandlungs-/Zusammenfuehrungsstatus dargestellt. Es wird keine eigene ffmpeg-Konvertierung erzwungen.
 
 ## Zielordnerzugriff
 
@@ -129,7 +147,7 @@ Der spaetere Download-Workflow bleibt unveraendert als Zielbild:
 1. Link wird eingegeben
 2. Link-Analyse mit `yt-dlp` JSON
 3. Details werden angezeigt
-4. Benutzer startet spaeter den Download
+4. Benutzer startet den Einzel-Download
 5. Zielordner wird geoeffnet oder aktualisiert
 6. Falls WhatsApp aktiv:
    - Download in Temp
@@ -141,7 +159,7 @@ Der spaetere Download-Workflow bleibt unveraendert als Zielbild:
    - direkter Download in Zielordner
 8. Dateiliste aktualisieren
 
-Der eigentliche Download ist aktuell noch nicht aktiv.
+Der eigentliche Download ist fuer einzelne Links aktiv. WhatsApp-Temp-Workflow und eigene Konvertierung sind noch nicht aktiv.
 
 ## Konfiguration
 

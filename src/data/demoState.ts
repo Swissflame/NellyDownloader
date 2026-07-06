@@ -13,4 +13,5 @@ export const initialState: AppState = {
   settings: DEFAULT_SETTINGS,
   settingsVisible: false,
   analysisInProgress: false,
+  downloadInProgress: false,
 };

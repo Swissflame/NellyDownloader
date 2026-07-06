@@ -2,8 +2,8 @@ import { renderApp, bindApp } from "./components/app";
 import { showDialog } from "./components/dialog";
 import { DEFAULT_SETTINGS, EMPTY_LINK_DETAILS } from "./config/defaults";
 import { initialState } from "./data/demoState";
-import type { AppSettings, AppState, TargetFolderState } from "./types/app";
-import type { ElectronApi } from "./types/electronApi";
+import type { AppSettings, AppState, DownloadProgressEvent, TargetFolderState } from "./types/app";
+import type { AnalyzeLinkResult, ElectronApi } from "./types/electronApi";
 import "./styles.css";
 
 const app = document.querySelector<HTMLDivElement>("#app");
@@ -21,6 +21,9 @@ let state: AppState = {
 };
 
 render();
+localApi.onDownloadProgress((progress) => {
+  applyDownloadProgress(progress);
+});
 void initializeApp();
 
 function render(): void {
@@ -205,12 +208,12 @@ function getSelectedFileIds(): string[] {
 document.addEventListener("nelly:placeholder-action", (event) => {
   const placeholderEvent = event as CustomEvent<{ action: string; url?: string }>;
 
-  if (placeholderEvent.detail.action === "analyze") {
-    void analyzeLink(placeholderEvent.detail.url ?? "");
+  if (placeholderEvent.detail.action === "download") {
+    void startDownloadWorkflow(placeholderEvent.detail.url ?? "");
   }
 });
 
-async function analyzeLink(url: string): Promise<void> {
+async function analyzeLink(url: string): Promise<AnalyzeLinkResult | null> {
   const trimmedUrl = url.trim();
   console.log("Analyse gestartet", trimmedUrl);
 
@@ -220,6 +223,9 @@ async function analyzeLink(url: string): Promise<void> {
     analysisInProgress: true,
     progress: {
       ...state.progress,
+      total: 0,
+      download: 0,
+      conversion: 0,
       status: "Link wird analysiert...",
     },
     linkDetails: {
@@ -243,6 +249,8 @@ async function analyzeLink(url: string): Promise<void> {
         status: "Analyse abgeschlossen",
       },
     };
+    render();
+    return details;
   } catch (error) {
     state = {
       ...state,
@@ -258,6 +266,129 @@ async function analyzeLink(url: string): Promise<void> {
     };
   }
 
+  render();
+  return null;
+}
+
+async function startDownloadWorkflow(url: string): Promise<void> {
+  const trimmedUrl = url.trim();
+
+  if (!trimmedUrl) {
+    state = {
+      ...state,
+      linkDetails: {
+        ...EMPTY_LINK_DETAILS,
+        error: "Bitte gib zuerst einen Link ein.",
+      },
+      progress: {
+        total: 0,
+        download: 0,
+        conversion: 0,
+        status: "Wartet auf gueltigen Link",
+      },
+    };
+    render();
+    return;
+  }
+
+  state = {
+    ...state,
+    downloadInProgress: true,
+  };
+  render();
+
+  const analyzedForCurrentLink = state.linkInput === trimmedUrl
+    && state.linkDetails.error === null
+    && state.linkDetails.platform !== EMPTY_LINK_DETAILS.platform
+    && state.linkDetails.platform !== "Analysiere...";
+
+  let downloadUrl = trimmedUrl;
+
+  if (!analyzedForCurrentLink) {
+    const details = await analyzeLink(trimmedUrl);
+
+    if (!details) {
+      state = {
+        ...state,
+        downloadInProgress: false,
+      };
+      render();
+      return;
+    }
+
+    downloadUrl = details.url;
+  }
+
+  if (!downloadUrl) {
+    state = {
+      ...state,
+      downloadInProgress: false,
+    };
+    render();
+    return;
+  }
+
+  state = {
+    ...state,
+    downloadInProgress: true,
+    analysisInProgress: false,
+    progress: {
+      total: 0,
+      download: 0,
+      conversion: 0,
+      status: "Download laeuft...",
+    },
+  };
+  render();
+
+  try {
+    const result = await localApi.startDownload(downloadUrl);
+
+    state = {
+      ...state,
+      downloadInProgress: false,
+      progress: {
+        total: 100,
+        download: 100,
+        conversion: 0,
+        status: result.message,
+      },
+      linkDetails: {
+        ...state.linkDetails,
+        error: null,
+      },
+    };
+    render();
+    await refreshTargetFolder();
+  } catch (error) {
+    state = {
+      ...state,
+      downloadInProgress: false,
+      progress: {
+        total: 0,
+        download: 0,
+        conversion: 0,
+        status: "Download fehlgeschlagen",
+      },
+      linkDetails: {
+        ...state.linkDetails,
+        error: error instanceof Error ? error.message : "Der Download ist fehlgeschlagen.",
+      },
+    };
+    render();
+  }
+}
+
+function applyDownloadProgress(progress: DownloadProgressEvent): void {
+  state = {
+    ...state,
+    progress: {
+      total: progress.total,
+      download: progress.download,
+      conversion: progress.conversion,
+      status: progress.status,
+    },
+  };
   render();
 }
 
@@ -313,7 +444,9 @@ function createFallbackApi(): ElectronApi {
     startDownload: async (url) => ({
       started: false,
       url,
-      message: "Download ist vorbereitet, ruft aber noch keine externen Tools auf.",
+      outputPath: null,
+      message: "Der echte Download ist nur in der Electron-App verfuegbar.",
     }),
+    onDownloadProgress: () => () => undefined,
   };
 }

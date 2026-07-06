@@ -1,4 +1,4 @@
-import type { AppSettings, LinkDetails, TargetFolderState } from "./app";
+import type { AppSettings, DownloadProgressEvent, LinkDetails, TargetFolderState } from "./app";
 
 export type PlaceholderResult = {
   message: string;
@@ -24,6 +24,7 @@ export type FileActionResult = PlaceholderResult & {
 export type StartDownloadResult = PlaceholderResult & {
   started: boolean;
   url: string;
+  outputPath: string | null;
 };
 
 export type AnalyzeLinkResult = LinkDetails & {
@@ -40,4 +41,5 @@ export type ElectronApi = {
   deleteSelectedFiles: (fileIds: string[]) => Promise<FileActionResult>;
   analyzeLink: (url: string) => Promise<AnalyzeLinkResult>;
   startDownload: (url: string) => Promise<StartDownloadResult>;
+  onDownloadProgress: (callback: (event: DownloadProgressEvent) => void) => () => void;
 };

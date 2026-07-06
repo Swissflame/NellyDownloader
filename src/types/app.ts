@@ -18,6 +18,10 @@ export type DownloadProgress = {
   status: string;
 };
 
+export type DownloadProgressEvent = DownloadProgress & {
+  phase: "analysis" | "download" | "conversion" | "complete" | "error";
+};
+
 export type OutputFile = {
   id: string;
   name: string;
@@ -52,6 +56,7 @@ export type AppState = {
   settings: AppSettings;
   settingsVisible: boolean;
   analysisInProgress: boolean;
+  downloadInProgress: boolean;
 };
 
 export type DialogMessage = {
