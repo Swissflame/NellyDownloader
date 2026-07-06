@@ -25,6 +25,8 @@ const smokeTestClipboardDownload = process.env.NELLY_ELECTRON_TEST_CLIPBOARD_DOW
 const smokeTestClipboardText = process.env.NELLY_ELECTRON_TEST_CLIPBOARD_TEXT;
 const smokeTestAbout = process.env.NELLY_ELECTRON_TEST_ABOUT === "1";
 const smokeTestShortcuts = process.env.NELLY_ELECTRON_TEST_SHORTCUTS === "1";
+const smokeTestVisualAssets = process.env.NELLY_ELECTRON_TEST_VISUAL_ASSETS === "1";
+const smokeTestEmptyState = process.env.NELLY_ELECTRON_TEST_EMPTY_STATE === "1";
 const supportedExtensions = new Set(["mp4", "mkv", "webm", "mov", "avi", "mp3", "m4a", "wav", "opus"]);
 const projectRoot = path.resolve(__dirname, "..", "..", "..");
 const windowIconPath = getAssetPath(projectRoot, "icons", "app-icon.ico");
@@ -171,6 +173,7 @@ async function runSmokeTest(): Promise<void> {
         let helpReady = true;
         let aboutReady = true;
         let shortcutsReady = true;
+        let visualAssetsReady = true;
         let clipboardDownloadReady = true;
         if (${JSON.stringify(smokeTestSettings)}) {
           const changedSettings = await window.nelly.saveSettings({
@@ -302,6 +305,36 @@ async function runSmokeTest(): Promise<void> {
             && aboutText.includes('NellyDownloader')
             && aboutText.includes('yt-dlp')
             && aboutText.includes('Zielordner');
+        }
+        if (${JSON.stringify(smokeTestVisualAssets)}) {
+          document.querySelector('[data-action="close-help"]')?.click();
+          document.querySelector('[data-action="close-settings"]')?.click();
+          document.querySelector('[data-action="close-about"]')?.click();
+          await new Promise((resolve) => setTimeout(resolve, 150));
+          document.querySelector('[data-action="refresh"]')?.click();
+          await new Promise((resolve) => setTimeout(resolve, 350));
+
+          const backgroundImage = getComputedStyle(document.body, '::before').backgroundImage;
+          const topbarBanner = document.querySelector('.topbar-banner');
+          const emptyImage = document.querySelector('.empty-folder-state img');
+          const emptyReady = ${JSON.stringify(smokeTestEmptyState)}
+            ? emptyImage instanceof HTMLImageElement && emptyImage.src.includes('/ui/empty-files.png')
+            : true;
+
+          document.querySelector('.topnav [data-action="help"]')?.click();
+          for (let attempt = 0; attempt < 40; attempt += 1) {
+            if (document.querySelector('[data-help-panel]')) break;
+            await new Promise((resolve) => setTimeout(resolve, 50));
+          }
+          const helpBanner = document.querySelector('.help-hero img');
+          const helpBannerReady = helpBanner instanceof HTMLImageElement && helpBanner.src.includes('/ui/help-banner.png');
+          document.querySelector('[data-action="close-help"]')?.click();
+
+          visualAssetsReady = backgroundImage.includes('app-background.png')
+            && topbarBanner instanceof HTMLImageElement
+            && topbarBanner.src.includes('/ui/app-hero-banner.png')
+            && helpBannerReady
+            && emptyReady;
         }
         if (${JSON.stringify(smokeTestShortcuts)}) {
           document.querySelector('[data-action="close-help"]')?.click();
@@ -460,7 +493,9 @@ async function runSmokeTest(): Promise<void> {
           && saved.saved === true
           && reloadedSettings.targetFolder === ${JSON.stringify(smokeTestTargetFolder)}
           && folder.folderExists === true
-          && folder.files.some((file) => file.name === "electron-test.mp4")
+          && (${JSON.stringify(smokeTestEmptyState)}
+            ? folder.files.length === 0
+            : folder.files.some((file) => file.name === "electron-test.mp4"))
           && analysisReady
           && downloadReady
           && copyReady
@@ -469,6 +504,7 @@ async function runSmokeTest(): Promise<void> {
           && helpReady
           && aboutReady
           && shortcutsReady
+          && visualAssetsReady
           && clipboardDownloadReady;
       })()
     `
@@ -506,6 +542,8 @@ async function runSmokeTest(): Promise<void> {
           hasHelpPanel: Boolean(document.querySelector('[data-help-panel]')),
           hasAboutPanel: Boolean(document.querySelector('[data-about-panel]')),
           hasFileList: Boolean(document.querySelector('.file-list')),
+          hasTopbarBanner: Boolean(document.querySelector('.topbar-banner')),
+          hasEmptyState: Boolean(document.querySelector('.empty-folder-state img')),
           shortcutSmokeDetails: window.__shortcutSmokeDetails ?? null,
           helpText: document.querySelector('[data-help-panel]')?.textContent?.slice(0, 200) ?? '',
           hasHelpSearch: Boolean(document.querySelector('[data-help-search]')),

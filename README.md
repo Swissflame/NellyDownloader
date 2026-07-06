@@ -10,6 +10,7 @@ NellyDownloader ist eine lokale Electron-App zum Analysieren, Herunterladen und 
 - Einzel-Download mit yt-dlp, ohne Playlists
 - Zielordner-Auswahl und echte Zielordner-Dateiliste
 - separat scrollbare Dateiliste fuer grosse Zielordner
+- NellyDownloader-Branding mit dezentem Hintergrund, kompaktem Kopfbereich und Empty-State
 - Downloadmodus: automatisch, erst analysieren, direkt herunterladen
 - WhatsApp-Kompatibilitaet mit ffprobe/ffmpeg-Pruefung
 - optionales Verschieben der Originaldatei in den Papierkorb nach erfolgreicher Umwandlung
@@ -29,7 +30,7 @@ NellyDownloader ist eine lokale Electron-App zum Analysieren, Herunterladen und 
 
 ## Entwicklungsstand
 
-Die Desktop-App ist funktionsfaehig fuer Analyse, Einzel-Download, Zielordner, Kopieren, Papierkorb und Hilfe. Grafiken und Anwendungssymbol sind eingebunden. Ein Installer ist noch nicht fertig; die vorbereiteten Installer-Assets liegen bereits unter `assets/installer`.
+Die Desktop-App ist funktionsfaehig fuer Analyse, Einzel-Download, Zielordner, Kopieren, Papierkorb und Hilfe. Icons und UI-Grafiken sind eingebunden. Ein Installer ist noch nicht fertig; die vorbereiteten Installer-Assets liegen bereits unter `assets/installer`.
 
 Die Tastenkombinationen sind mit Standardbelegung vorbereitet und in den Einstellungen sichtbar. Freie Bearbeitung der Belegung folgt spaeter.
 

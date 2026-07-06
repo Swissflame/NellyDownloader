@@ -65,12 +65,13 @@ Der Zielordnerbereich bleibt Teil des Renderers. Die Dateiliste selbst hat eine 
 Grafiken und Icons liegen zentral im Projektordner `assets/`:
 
 - `assets/icons` enthaelt das Windows-Fenstericon und PNG-Favicons
-- `assets/about` enthaelt Bilder fuer Hilfe und Info-Dialog
+- `assets/about` enthaelt Bilder fuer den Info-Dialog
+- `assets/ui` enthaelt Hintergrund, Kopfbereich, Hilfe-Banner und Empty-State der App
 - `assets/readme` enthaelt die GitHub-/README-Vorschau
 - `assets/installer` enthaelt vorbereitete Installer-Grafiken
 - `assets/source` enthaelt die Master-Grafik fuer das App-Icon
 
-Der Renderer bindet diese Dateien ueber Vites `publicDir: "../assets"` ein. Dadurch koennen Hilfe und Info-Dialog Bilder wie `/about/about-banner.png` verwenden, ohne Bilder nach `src/` zu duplizieren.
+Der Renderer bindet diese Dateien ueber Vites `publicDir: "../assets"` ein. Dadurch koennen UI-Grafiken wie `/ui/app-background.png`, `/ui/help-banner.png` und `/ui/empty-files.png` verwendet werden, ohne Bilder nach `src/` zu duplizieren.
 
 Der Electron Main-Prozess setzt das Fenstericon ueber eine kleine Asset-Pfad-Hilfe aus `src/electron/assetPaths.ts`. Der Pfad basiert auf dem Projektroot und verwendet keine absoluten Entwicklerpfade.
 

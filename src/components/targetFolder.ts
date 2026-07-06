@@ -4,7 +4,8 @@ import { escapeHtml } from "../utils/html";
 export function renderTargetFolder(folderState: TargetFolderState, targetFolder: string): string {
   const fileContent = folderState.files.length > 0
     ? folderState.files.map(fileRow).join("")
-    : `<div class="folder-message">${escapeHtml(folderState.message ?? "Der Zielordner ist leer.")}</div>`;
+    : emptyFolderMessage(folderState);
+  const fileListClass = folderState.files.length > 0 ? "file-list" : "file-list file-list-empty";
 
   return `
     <section class="panel target-panel" aria-labelledby="target-heading">
@@ -16,7 +17,7 @@ export function renderTargetFolder(folderState: TargetFolderState, targetFolder:
         <button class="ghost-button" type="button" data-action="refresh">Aktualisieren</button>
       </div>
       <div class="folder-path">${escapeHtml(targetFolder)}</div>
-      <div class="file-list" role="list" aria-label="Dateien im Zielordner">
+      <div class="${fileListClass}" role="list" aria-label="Dateien im Zielordner">
         ${fileContent}
       </div>
       <div class="file-actions">
@@ -24,6 +25,21 @@ export function renderTargetFolder(folderState: TargetFolderState, targetFolder:
         <button class="danger-button" type="button" data-action="delete">Ausgewählte löschen</button>
       </div>
     </section>
+  `;
+}
+
+function emptyFolderMessage(folderState: TargetFolderState): string {
+  const message = escapeHtml(folderState.message ?? "Der Zielordner ist leer.");
+
+  if (!folderState.folderExists) {
+    return `<div class="folder-message">${message}</div>`;
+  }
+
+  return `
+    <div class="folder-message empty-folder-state">
+      <img src="/ui/empty-files.png" alt="" />
+      <p>${message}</p>
+    </div>
   `;
 }
 

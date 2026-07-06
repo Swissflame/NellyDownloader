@@ -15,13 +15,27 @@
 }
 
 body {
+  position: relative;
+  isolation: isolate;
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
   background:
-    linear-gradient(120deg, rgba(56, 89, 166, 0.28), transparent 32rem),
-    linear-gradient(220deg, rgba(29, 129, 109, 0.16), transparent 28rem),
-    #101114;
+    linear-gradient(120deg, rgba(56, 89, 166, 0.2), transparent 32rem),
+    linear-gradient(220deg, rgba(29, 129, 109, 0.14), transparent 28rem),
+    #0d1016;
+}
+
+body::before {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  content: "";
+  background:
+    linear-gradient(180deg, rgba(13, 16, 22, 0.36), rgba(13, 16, 22, 0.82)),
+    url("/ui/app-background.png") center / cover no-repeat;
+  opacity: 0.34;
 }
 
 button,
@@ -51,6 +65,8 @@ input:focus-visible {
 }
 
 .shell {
+  position: relative;
+  z-index: 1;
   width: min(1180px, calc(100% - 2rem));
   margin: 0 auto;
   padding: 1.25rem 0 2rem;
@@ -60,7 +76,7 @@ input:focus-visible {
 .panel,
 .link-panel {
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(26, 29, 36, 0.86);
+  background: rgba(20, 23, 31, 0.9);
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.26);
   backdrop-filter: blur(18px);
 }
@@ -73,6 +89,25 @@ input:focus-visible {
   min-height: 5rem;
   padding: 1rem 1.25rem;
   border-radius: 8px 8px 0 0;
+  overflow: hidden;
+}
+
+.topbar-branding {
+  display: grid;
+  grid-template-columns: minmax(14rem, auto) minmax(12rem, 21rem);
+  gap: 1rem;
+  align-items: center;
+  min-width: 0;
+}
+
+.topbar-banner {
+  width: 100%;
+  height: 4.1rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  object-fit: cover;
+  object-position: center;
+  opacity: 0.92;
 }
 
 .topbar h1,
@@ -379,7 +414,7 @@ kbd {
 
 .help-hero {
   display: grid;
-  grid-template-columns: minmax(8rem, 12rem) minmax(0, 1fr);
+  grid-template-columns: minmax(12rem, 18rem) minmax(0, 1fr);
   gap: 1rem;
   align-items: center;
   margin-bottom: 1rem;
@@ -391,7 +426,10 @@ kbd {
 
 .help-hero img {
   width: 100%;
+  height: 5.4rem;
   border-radius: 6px;
+  object-fit: cover;
+  object-position: center;
 }
 
 .help-hero p {
@@ -536,11 +574,36 @@ mark {
   scrollbar-gutter: stable;
 }
 
+.file-list-empty {
+  overflow: hidden;
+}
+
 .folder-message {
   min-height: 3.2rem;
   padding: 0.9rem;
   color: #b9c5d6;
   background: rgba(255, 255, 255, 0.03);
+}
+
+.empty-folder-state {
+  display: grid;
+  justify-items: center;
+  gap: 0.7rem;
+  padding: 1.1rem;
+  text-align: center;
+}
+
+.empty-folder-state img {
+  width: min(14rem, 72%);
+  max-height: 8rem;
+  border-radius: 8px;
+  object-fit: cover;
+  opacity: 0.9;
+}
+
+.empty-folder-state p {
+  max-width: 32rem;
+  margin: 0;
 }
 
 .file-row {
@@ -664,6 +727,14 @@ select {
 
   .topbar {
     display: grid;
+  }
+
+  .topbar-branding {
+    grid-template-columns: 1fr;
+  }
+
+  .topbar-banner {
+    height: 3.6rem;
   }
 
   .link-form {

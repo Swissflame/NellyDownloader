@@ -137,7 +137,7 @@ Begruendung:
 
 Begruendung:
 
-- Icons, About-Grafiken, README-Vorschau und spaetere Installer-Grafiken bleiben an einem Ort unter `assets/`
+- Icons, UI-Grafiken, About-Grafiken, README-Vorschau und spaetere Installer-Grafiken bleiben an einem Ort unter `assets/`
 - der Renderer kann Assets ueber Vites `publicDir` verwenden, ohne Dateien nach `src/` zu kopieren
 - der Electron Main-Prozess nutzt eine Asset-Pfad-Hilfe statt hart codierter absoluter Pfade
 - Installer-Assets sind vorbereitet, aber noch nicht in einen Installer-Build eingebunden
