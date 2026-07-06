@@ -64,6 +64,9 @@ Aktueller Stand:
 - Aufruf nur mit `--dump-json --no-playlist --skip-download`
 - keine Downloads und keine Zielordner-Schreibzugriffe
 - Suche ueber gespeicherten Pfad, Windows-Referenzdatei und `PATH`
+- Instagram nutzt bei Bedarf die Cookie-Strategie der alten Referenzversion
+- Browser-Cookies werden mit `--cookies-from-browser` und sauberer Argumentliste versucht
+- Tracking-Parameter werden fuer Instagram-Reel/Post-Links vor der Analyse entfernt
 
 ## Entscheidung 7: WhatsApp-Ausgabe ueber Temp
 

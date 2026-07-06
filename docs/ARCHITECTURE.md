@@ -90,6 +90,9 @@ Sicherheitsregeln:
 - es werden keine Mediendateien heruntergeladen
 - es werden keine Dateien im Zielordner erzeugt
 - die Analyse hat ein Timeout von 60 Sekunden
+- Instagram-Links werden vor der Analyse von typischen Tracking-Parametern bereinigt
+- bei Instagram werden je nach Cookie-Modus Browser-Cookies oder `cookies.txt` versucht
+- bei Browser `Automatisch` werden mehrere Browser nacheinander versucht
 
 `yt-dlp` wird in dieser Reihenfolge gesucht:
 
