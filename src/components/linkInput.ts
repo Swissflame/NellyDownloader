@@ -1,3 +1,5 @@
+import { escapeHtml } from "../utils/html";
+
 export function renderLinkInput(linkInput: string): string {
   return `
     <section class="link-panel" aria-labelledby="link-heading">
@@ -7,7 +9,7 @@ export function renderLinkInput(linkInput: string): string {
       </div>
       <form class="link-form">
         <label class="visually-hidden" for="download-link">Link eingeben</label>
-        <input id="download-link" name="download-link" type="url" value="${linkInput}" placeholder="https://..." autocomplete="off" />
+        <input id="download-link" name="download-link" type="url" value="${escapeHtml(linkInput)}" placeholder="https://..." autocomplete="off" />
         <button class="primary-button" type="submit">Download starten</button>
       </form>
     </section>

@@ -19,8 +19,8 @@ export function renderApp(state: AppState): string {
         ${renderProgressPanel(state.progress)}
       </div>
 
-      ${renderTargetFolder(state.outputFiles, state.settings.targetFolder)}
-      ${renderSettingsPanel(state.settings)}
+      ${renderTargetFolder(state.targetFolder, state.settings.targetFolder)}
+      ${renderSettingsPanel(state.settings, state.settingsVisible)}
       ${renderHelpPanel()}
       ${renderDialog()}
     </main>

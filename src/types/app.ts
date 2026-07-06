@@ -25,6 +25,12 @@ export type OutputFile = {
   selected: boolean;
 };
 
+export type TargetFolderState = {
+  files: OutputFile[];
+  message: string | null;
+  folderExists: boolean;
+};
+
 export type CookieMode = "auto" | "browser" | "file" | "none";
 
 export type AppSettings = {
@@ -39,8 +45,9 @@ export type AppState = {
   linkInput: string;
   linkDetails: LinkDetails;
   progress: DownloadProgress;
-  outputFiles: OutputFile[];
+  targetFolder: TargetFolderState;
   settings: AppSettings;
+  settingsVisible: boolean;
 };
 
 export type DialogMessage = {

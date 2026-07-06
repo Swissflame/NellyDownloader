@@ -1,4 +1,4 @@
-import type { AppSettings, LinkDetails, OutputFile } from "./app";
+import type { AppSettings, LinkDetails, TargetFolderState } from "./app";
 
 export type PlaceholderResult = {
   message: string;
@@ -12,6 +12,7 @@ export type SaveSettingsResult = PlaceholderResult & {
 export type SelectTargetFolderResult = PlaceholderResult & {
   canceled: boolean;
   path: string | null;
+  settings: AppSettings;
 };
 
 export type FileActionResult = PlaceholderResult & {
@@ -30,7 +31,7 @@ export type ElectronApi = {
   getSettings: () => Promise<AppSettings>;
   saveSettings: (settings: AppSettings) => Promise<SaveSettingsResult>;
   selectTargetFolder: () => Promise<SelectTargetFolderResult>;
-  listTargetFolder: () => Promise<OutputFile[]>;
+  listTargetFolder: () => Promise<TargetFolderState>;
   copySelectedFiles: (fileIds: string[]) => Promise<FileActionResult>;
   deleteSelectedFiles: (fileIds: string[]) => Promise<FileActionResult>;
   analyzeLink: (url: string) => Promise<LinkDetails & { url: string }>;

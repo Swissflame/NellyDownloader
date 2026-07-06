@@ -42,7 +42,10 @@ Aufgaben:
 - Desktop-Fenster erstellen
 - sichere WebPreferences setzen
 - IPC-Handler registrieren
-- spaeter lokale Betriebssystemfunktionen kapseln
+- Einstellungen in `app.getPath("userData")/settings.json` speichern
+- Zielordner ueber nativen Electron-Dialog auswaehlen
+- Zielordnerinhalt lesen und als sichere Daten an den Renderer geben
+- spaeter weitere lokale Betriebssystemfunktionen kapseln
 - spaeter externe Tools wie `yt-dlp`, `ffmpeg` und `ffprobe` starten
 
 Sicherheit:
@@ -58,9 +61,9 @@ Datei:
 
 - `src/electron/preload.ts`
 
-Der Preload stellt ueber `contextBridge` die globale API `window.nelly` bereit. Diese API ist aktuell nur vorbereitet und fuehrt noch keine gefaehrlichen Aktionen aus.
+Der Preload stellt ueber `contextBridge` die globale API `window.nelly` bereit. Der Renderer hat keinen direkten Node-Zugriff. Dateisystemzugriff findet nur im Main-Prozess statt.
 
-Vorbereitete Methoden:
+API-Methoden:
 
 - `getAppVersion()`
 - `getSettings()`
@@ -71,6 +74,28 @@ Vorbereitete Methoden:
 - `deleteSelectedFiles(fileIds)`
 - `analyzeLink(url)`
 - `startDownload(url)`
+
+`getSettings`, `saveSettings`, `selectTargetFolder` und `listTargetFolder` arbeiten bereits lokal. `copySelectedFiles`, `deleteSelectedFiles`, `analyzeLink` und `startDownload` sind absichtlich noch sichere Platzhalter.
+
+## Zielordnerzugriff
+
+Der gespeicherte Zielordner wird im Main-Prozess gelesen. Es werden nur normale Dateien angezeigt, keine Unterordner.
+
+Unterstuetzte Dateitypen:
+
+- `mp4`
+- `mkv`
+- `webm`
+- `mov`
+- `avi`
+- `mp3`
+- `m4a`
+- `wav`
+- `opus`
+
+Der Renderer erhaelt nur strukturierte Daten mit Dateiname, Groesse, Aenderungsdatum und Typ. Wenn der Ordner leer ist oder nicht existiert, liefert der Main-Prozess eine deutschsprachige Meldung.
+
+Kopieren und Loeschen sind sichtbar, aber absichtlich deaktiviert und fuehren keine Dateiaktionen aus.
 
 ## Lokale Workflows
 
@@ -93,20 +118,19 @@ Der spaetere Download-Workflow bleibt unveraendert als Zielbild:
 
 ## Konfiguration
 
-Geplante Speicherorte:
+Aktueller Speicherort:
 
-- Windows: `%APPDATA%/NellyDownloader/config.json`
-- macOS: `~/Library/Application Support/NellyDownloader/config.json`
+- Electron `app.getPath("userData")`
+- Datei: `settings.json`
 
-Tool-Ordner:
+Beim ersten Start werden Standardwerte verwendet. Danach wird der gewaehlt Zielordner persistent in der Settings-Datei gespeichert.
 
-- Windows: `%LOCALAPPDATA%/NellyDownloader/tools`
-- macOS: `~/Library/Application Support/NellyDownloader/tools`
+Geplante Tool- und Temp-Speicherorte:
 
-Temp-Ordner:
-
-- Windows: `%LOCALAPPDATA%/NellyDownloader/temp`
-- macOS: `~/Library/Caches/NellyDownloader/temp`
+- Windows Tool-Ordner: `%LOCALAPPDATA%/NellyDownloader/tools`
+- macOS Tool-Ordner: `~/Library/Application Support/NellyDownloader/tools`
+- Windows Temp-Ordner: `%LOCALAPPDATA%/NellyDownloader/temp`
+- macOS Temp-Ordner: `~/Library/Caches/NellyDownloader/temp`
 
 ## Performance auf macOS
 

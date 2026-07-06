@@ -271,6 +271,16 @@ progress::-moz-progress-bar {
   margin-top: 1rem;
 }
 
+.settings-panel {
+  margin-top: 1rem;
+}
+
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
 .folder-path {
   margin-bottom: 0.8rem;
   color: #b9c5d6;
@@ -282,6 +292,13 @@ progress::-moz-progress-bar {
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 8px;
   overflow: hidden;
+}
+
+.folder-message {
+  min-height: 3.2rem;
+  padding: 0.9rem;
+  color: #b9c5d6;
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .file-row {
@@ -382,7 +399,12 @@ progress::-moz-progress-bar {
     justify-content: stretch;
   }
 
+  .settings-actions {
+    justify-content: stretch;
+  }
+
   .file-actions button,
+  .settings-actions button,
   .topnav button {
     flex: 1 1 auto;
   }

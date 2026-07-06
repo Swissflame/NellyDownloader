@@ -20,7 +20,26 @@ Begruendung:
 - `sandbox` ist aktiv
 - lokale Funktionen werden nur ueber `contextBridge` und IPC sichtbar gemacht
 
-## Entscheidung 3: ffmpeg bleibt extern
+## Entscheidung 3: Einstellungen im Electron-userData-Ordner
+
+Begruendung:
+
+- Einstellungen gehoeren nicht in den Projektordner
+- Electron stellt mit `app.getPath("userData")` einen plattformgerechten App-Datenordner bereit
+- `settings.json` ist fuer die aktuelle Projektphase einfach lesbar und gut testbar
+- beim ersten Start koennen Standardwerte verwendet werden
+
+## Entscheidung 4: Zielordnerzugriff nur im Main-Prozess
+
+Begruendung:
+
+- der Renderer bleibt vom Dateisystem getrennt
+- Dateizugriff laeuft kontrolliert ueber IPC und Preload
+- Unterordner werden nicht angezeigt
+- nur unterstuetzte Mediendateien werden gelistet
+- Loeschen und Kopieren bleiben absichtlich deaktiviert, bis diese Aktionen gesondert abgesichert sind
+
+## Entscheidung 5: ffmpeg bleibt extern
 
 Begruendung:
 
@@ -30,7 +49,7 @@ Begruendung:
 - externe Binary kann einfach aktualisiert werden
 - Performancegewinn durch Integration waere voraussichtlich gering
 
-## Entscheidung 4: yt-dlp bleibt extern
+## Entscheidung 6: yt-dlp bleibt extern
 
 Begruendung:
 
@@ -39,7 +58,7 @@ Begruendung:
 - eigene Implementierung waere unverhaeltnismaessig
 - Electron Main kann spaeter den Prozessstart kapseln
 
-## Entscheidung 5: WhatsApp-Ausgabe ueber Temp
+## Entscheidung 7: WhatsApp-Ausgabe ueber Temp
 
 Begruendung:
 
@@ -47,7 +66,7 @@ Begruendung:
 - Benutzer sieht nur die fertige Datei
 - Original-Zwischendateien koennen entfernt werden
 
-## Entscheidung 6: Windows-Version als funktionale Referenz
+## Entscheidung 8: Windows-Version als funktionale Referenz
 
 Begruendung:
 
