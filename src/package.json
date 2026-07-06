@@ -3,12 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "main": "dist-electron/electron/main.cjs",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "tsc && vite build",
+    "dev:electron": "npm run build:electron && node scripts/dev-electron.mjs",
+    "build": "tsc && vite build && npm run build:electron",
+    "build:electron": "tsc -p tsconfig.electron.json && node scripts/prepare-electron-build.mjs",
     "preview": "vite preview --host 127.0.0.1"
   },
   "devDependencies": {
+    "@types/node": "^26.1.0",
+    "electron": "^43.0.0",
     "typescript": "^5.8.3",
     "vite": "^7.0.0"
   }

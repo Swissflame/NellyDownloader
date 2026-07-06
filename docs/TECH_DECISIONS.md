@@ -1,56 +1,56 @@
 # Technische Entscheidungen
 
-## Entscheidung 1: Tauri statt klassischer C# GUI
+## Entscheidung 1: Electron als Desktop-Grundlage
 
-Begründung:
+Begruendung:
 
-- moderne Oberfläche
-- keine klobige Standard-Windows-Optik
-- Windows und macOS
-- kleine Installer
-- Rust-Backend möglich
-- Web-UI flexibel gestaltbar
+- die bestehende Vite/TypeScript-GUI kann direkt weiterverwendet werden
+- Desktop-Fenster, Preload und IPC lassen sich sauber trennen
+- Node-nahe lokale Funktionen passen gut zu spaeteren Datei- und Prozess-Workflows
+- Windows und macOS koennen mit einer gemeinsamen UI bedient werden
+- der Renderer bleibt trotzdem als normales Vite-Frontend startbar
 
-## Entscheidung 2: Rust für Core
+## Entscheidung 2: Sichere Trennung von Renderer, Main und Preload
 
-Begründung:
+Begruendung:
 
-- sehr schnell
-- kleine native Binaries
-- gute Prozesssteuerung
-- gute plattformübergreifende Möglichkeiten
-- geeignet für Downloader-Workflows
+- der Renderer bekommt keinen direkten Node-Zugriff
+- `contextIsolation` ist aktiv
+- `nodeIntegration` ist deaktiviert
+- `sandbox` ist aktiv
+- lokale Funktionen werden nur ueber `contextBridge` und IPC sichtbar gemacht
 
 ## Entscheidung 3: ffmpeg bleibt extern
 
-Begründung:
+Begruendung:
 
 - ffmpeg ist bereits hochoptimiert
-- Integration als Library wäre aufwendig
-- Lizenz- und Build-Komplexität
+- Integration als Library waere aufwendig
+- Lizenz- und Build-Komplexitaet bleibt geringer
 - externe Binary kann einfach aktualisiert werden
-- Performancegewinn durch Integration wäre voraussichtlich gering
+- Performancegewinn durch Integration waere voraussichtlich gering
 
 ## Entscheidung 4: yt-dlp bleibt extern
 
-Begründung:
+Begruendung:
 
-- Plattformen ändern sich häufig
+- Plattformen aendern sich haeufig
 - yt-dlp wird laufend gepflegt
-- eigene Implementierung wäre unverhältnismäßig
+- eigene Implementierung waere unverhaeltnismaessig
+- Electron Main kann spaeter den Prozessstart kapseln
 
-## Entscheidung 5: WhatsApp-Ausgabe über Temp
+## Entscheidung 5: WhatsApp-Ausgabe ueber Temp
 
-Begründung:
+Begruendung:
 
 - Zielordner bleibt sauber
 - Benutzer sieht nur die fertige Datei
-- Original-Zwischendateien können entfernt werden
+- Original-Zwischendateien koennen entfernt werden
 
 ## Entscheidung 6: Windows-Version als funktionale Referenz
 
-Begründung:
+Begruendung:
 
 - bestehende Windows-Version funktioniert gut
-- Workflow ist bestätigt
+- Workflow ist bestaetigt
 - Mac-Version muss technisch aufholen

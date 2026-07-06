@@ -1,79 +1,99 @@
-# Architektur – Nelly Downloader
+# Architektur - Nelly Downloader
 
-## Überblick
+## Ueberblick
 
-Die App besteht aus drei Schichten:
+Die App besteht aktuell aus drei klar getrennten Bereichen:
 
-1. UI-Schicht
-2. App-Backend / Tauri Commands
-3. Core-Logik
+1. Renderer / UI
+2. Electron Main-Prozess
+3. Electron Preload-Bruecke
 
-## UI-Schicht
+Spaetere lokale Funktionen wie Link-Analyse, Download, Tool-Verwaltung und Dateiaktionen werden nicht direkt im Renderer ausgefuehrt. Der Renderer bleibt eine Vite/TypeScript-Oberflaeche und spricht nur ueber die Preload-API mit dem lokalen Desktop-Teil.
+
+## Renderer / UI
 
 Technologie:
 
 - HTML
 - CSS
 - TypeScript
-- Tauri WebView
+- Vite
 
 Aufgaben:
 
-- Menüs anzeigen
+- Menues anzeigen
 - Link-Eingabe
-- Details anzeigen
-- Fortschrittsbalken
-- Zielordner-Dateiliste
-- Einstellungen
-- Hilfe
+- Link-Details anzeigen
+- Fortschrittsbalken anzeigen
+- Zielordner-Dateiliste anzeigen
+- Einstellungen anzeigen
+- Hilfe anzeigen
 
-Die UI enthält möglichst wenig Business-Logik.
+Die UI enthaelt moeglichst wenig Business-Logik. Komponenten liegen unter `src/components`, zentrale Typen unter `src/types`, Standardwerte unter `src/config`.
 
-## Tauri Commands
+## Electron Main-Prozess
 
-Kommunikation zwischen UI und Rust.
+Datei:
 
-Beispiele:
+- `src/electron/main.ts`
 
-- `analyze_link(url)`
-- `start_download(url, options)`
-- `cancel_download(job_id)`
-- `get_settings()`
-- `save_settings(settings)`
-- `list_target_folder()`
-- `copy_selected_files(files)`
-- `delete_selected_files(files)`
-- `open_target_folder()`
-- `check_tools()`
-- `update_tool(tool_name)`
-- `get_help_index()`
-- `search_help(query)`
+Aufgaben:
 
-## Rust Core
+- Desktop-Fenster erstellen
+- sichere WebPreferences setzen
+- IPC-Handler registrieren
+- spaeter lokale Betriebssystemfunktionen kapseln
+- spaeter externe Tools wie `yt-dlp`, `ffmpeg` und `ffprobe` starten
 
-Module:
+Sicherheit:
 
-```text
-src-tauri/src/
-├── main.rs
-├── config.rs
-├── tools.rs
-├── downloader.rs
-├── ffmpeg.rs
-├── folders.rs
-├── clipboard.rs
-├── platform/
-│   ├── mod.rs
-│   ├── windows.rs
-│   └── macos.rs
-├── help.rs
-├── logging.rs
-└── models.rs
-```
+- `contextIsolation` ist aktiv
+- `nodeIntegration` ist deaktiviert
+- `sandbox` ist aktiv
+- Renderer-Zugriff auf lokale Funktionen laeuft nur ueber Preload und IPC
+
+## Electron Preload
+
+Datei:
+
+- `src/electron/preload.ts`
+
+Der Preload stellt ueber `contextBridge` die globale API `window.nelly` bereit. Diese API ist aktuell nur vorbereitet und fuehrt noch keine gefaehrlichen Aktionen aus.
+
+Vorbereitete Methoden:
+
+- `getAppVersion()`
+- `getSettings()`
+- `saveSettings(settings)`
+- `selectTargetFolder()`
+- `listTargetFolder()`
+- `copySelectedFiles(fileIds)`
+- `deleteSelectedFiles(fileIds)`
+- `analyzeLink(url)`
+- `startDownload(url)`
+
+## Lokale Workflows
+
+Der spaetere Download-Workflow bleibt unveraendert als Zielbild:
+
+1. Link wird eingegeben
+2. Link-Analyse mit `yt-dlp` JSON
+3. Details werden angezeigt
+4. Benutzer startet Download
+5. Zielordner wird geoeffnet oder aktualisiert
+6. Falls WhatsApp aktiv:
+   - Download in Temp
+   - Analyse mit `ffprobe`
+   - falls noetig Konvertierung mit `ffmpeg`
+   - finale Datei in Zielordner
+   - Temp aufraeumen
+7. Falls WhatsApp aus:
+   - direkter Download in Zielordner
+8. Dateiliste aktualisieren
 
 ## Konfiguration
 
-Speicherort:
+Geplante Speicherorte:
 
 - Windows: `%APPDATA%/NellyDownloader/config.json`
 - macOS: `~/Library/Application Support/NellyDownloader/config.json`
@@ -88,41 +108,23 @@ Temp-Ordner:
 - Windows: `%LOCALAPPDATA%/NellyDownloader/temp`
 - macOS: `~/Library/Caches/NellyDownloader/temp`
 
-## Download-Workflow
-
-1. Link wird eingegeben
-2. Link-Analyse mit yt-dlp JSON
-3. Details werden angezeigt
-4. Benutzer startet Download
-5. Zielordner wird geöffnet/aktualisiert
-6. Falls WhatsApp aktiv:
-   - Download in Temp
-   - ffprobe analysiert Ergebnis
-   - falls nötig ffmpeg-Konvertierung
-   - finale Datei in Zielordner
-   - Temp aufräumen
-7. Falls WhatsApp aus:
-   - direkter Download in Zielordner
-8. Dateiliste aktualisieren
-
 ## Performance auf macOS
 
 Zu vermeiden:
 
-- teure Tool-Prüfung bei jedem Start
-- unnötige Finder AppleScript-Abfragen
+- teure Tool-Pruefung bei jedem Start
+- unnoetige Finder AppleScript-Abfragen
 - dauerndes Auslesen von Browser-Cookies
-- Shellscript-Overhead
 - blockierende UI
 
 Strategien:
 
 - Tool-Versionen cachen
 - Tool-Check asynchron
-- Finder-Öffnung einfach über native API oder `open`, nicht vorher langsam prüfen
+- Finder-Oeffnung ueber native API oder `open`
 - Download/ffmpeg in Hintergrundprozess
 - Fortschrittsausgabe streamen
-- Logs nicht synchron übermäßig schreiben
+- Logs nicht synchron uebermaessig schreiben
 
 ## Fehlerbehandlung
 

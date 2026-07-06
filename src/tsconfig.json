@@ -13,5 +13,6 @@
     "noEmit": true,
     "strict": true
   },
-  "include": ["**/*.ts"]
+  "include": ["main.ts", "components/**/*.ts", "config/**/*.ts", "data/**/*.ts", "types/**/*.ts"],
+  "exclude": ["electron", "dist", "dist-electron", "node_modules", "scripts"]
 }

@@ -36,6 +36,7 @@ node_modules/
 # Build / Installer
 build/
 dist/
+dist-electron/
 *.spec
 
 # Betriebssystem / Editor
