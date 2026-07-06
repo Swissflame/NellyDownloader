@@ -170,6 +170,7 @@ async function runSmokeTest(): Promise<void> {
           copyReady = noSelection.copied === false
             && oneFile.copied === true
             && multipleFiles.copied === true
+            && (navigator.platform.toLowerCase().includes('win') ? oneFile.mode === 'files' && multipleFiles.mode === 'files' : true)
             && ids.length >= 2;
         }
         return settingsPanelVisible

@@ -148,7 +148,9 @@ Der Renderer erhaelt nur strukturierte Daten mit Dateiname, Groesse, Aenderungsd
 - die Datei existiert
 - die Datei ist eine normale Datei und kein Ordner
 
-Unter Windows wird zuerst versucht, die Dateien mit `Set-Clipboard -LiteralPath` als echte Dateiablage in die Zwischenablage zu legen. Wenn das nicht funktioniert oder auf anderen Plattformen, werden die vollstaendigen Dateipfade als Text in die Zwischenablage geschrieben.
+Unter Windows wird zuerst versucht, die Dateien als echte CF_HDROP/FileDropList in die Zwischenablage zu legen. Dafuer startet der Main-Prozess `powershell.exe` mit `-NoProfile`, `-NonInteractive`, `-STA` und einer festen .NET-Clipboard-Routine. Dateipfade werden nicht in PowerShell-Code interpoliert, sondern als Base64-kodiertes JSON ueber eine Umgebungsvariable uebergeben.
+
+Wenn die Dateiablage nicht verfuegbar ist oder auf anderen Plattformen, werden die vollstaendigen Dateipfade als Text in die Zwischenablage geschrieben und die GUI meldet diesen Fallback klar.
 
 Beim Kopieren werden Dateien nicht veraendert, nicht verschoben und nicht geloescht.
 

@@ -15,6 +15,7 @@ if (!app) {
 const appElement = app;
 const fallbackApi = createFallbackApi();
 const localApi = window.nelly ?? fallbackApi;
+let toastTimeout: number | undefined;
 let state: AppState = {
   ...initialState,
   settings: DEFAULT_SETTINGS,
@@ -194,16 +195,54 @@ async function showFileActionPlaceholder(action: "copy" | "delete"): Promise<voi
       ? await localApi.copySelectedFiles(selectedFileIds)
       : await localApi.deleteSelectedFiles(selectedFileIds);
 
+    if (action === "copy") {
+      showToast(result.message);
+      return;
+    }
+
     showDialog({
-      title: action === "copy" ? "Kopieren" : "Löschen",
+      title: "Löschen",
       text: result.message,
     });
   } catch (error) {
+    const message = error instanceof Error ? error.message : "Die Dateiaktion ist fehlgeschlagen.";
+
+    if (action === "copy") {
+      showToast(message);
+      return;
+    }
+
     showDialog({
-      title: action === "copy" ? "Kopieren" : "Löschen",
-      text: error instanceof Error ? error.message : "Die Dateiaktion ist fehlgeschlagen.",
+      title: "Löschen",
+      text: message,
     });
   }
+}
+
+function showToast(message: string): void {
+  let toast = document.querySelector<HTMLDivElement>("[data-toast]");
+
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.className = "toast-message";
+    toast.dataset.toast = "true";
+    toast.setAttribute("role", "status");
+    toast.setAttribute("aria-live", "polite");
+    document.body.append(toast);
+  }
+
+  toast.textContent = message;
+  toast.hidden = false;
+
+  if (toastTimeout) {
+    window.clearTimeout(toastTimeout);
+  }
+
+  toastTimeout = window.setTimeout(() => {
+    if (toast) {
+      toast.hidden = true;
+    }
+  }, 3_000);
 }
 
 function getSelectedFileIds(): string[] {
@@ -358,7 +397,7 @@ async function startDownloadWorkflow(url: string): Promise<void> {
         total: 100,
         download: 100,
         conversion: 0,
-        status: result.message,
+        status: "Download abgeschlossen",
       },
       linkDetails: {
         ...state.linkDetails,

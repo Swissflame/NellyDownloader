@@ -46,9 +46,7 @@ export async function copyTargetFilesToClipboard(
     copied: true,
     fileIds,
     mode: "paths",
-    message: filePaths.length === 1
-      ? "1 Dateipfad wurde kopiert."
-      : `${filePaths.length} Dateipfade wurden kopiert.`,
+    message: "Dateiablage nicht verfügbar, Dateipfade wurden kopiert.",
   };
 }
 
@@ -106,28 +104,53 @@ function validateFileId(fileId: string): string {
 
 function tryWriteWindowsFileClipboard(filePaths: string[]): Promise<boolean> {
   return new Promise((resolve) => {
+    const encodedFilePaths = Buffer.from(JSON.stringify(filePaths), "utf-8").toString("base64");
+    const script = [
+      "$ErrorActionPreference = 'Stop'",
+      "Add-Type -AssemblyName System.Windows.Forms",
+      "$json = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($env:NELLY_FILE_CLIPBOARD_B64))",
+      "$files = ConvertFrom-Json -InputObject $json",
+      "$collection = New-Object System.Collections.Specialized.StringCollection",
+      "foreach ($file in $files) { [void] $collection.Add([string] $file) }",
+      "[System.Windows.Forms.Clipboard]::SetFileDropList($collection)",
+    ].join("; ");
     const child = spawn(
       "powershell.exe",
       [
         "-NoProfile",
         "-NonInteractive",
+        "-STA",
         "-ExecutionPolicy",
         "Bypass",
         "-Command",
-        "Set-Clipboard -LiteralPath $args",
-        ...filePaths,
+        script,
       ],
       {
+        env: {
+          ...process.env,
+          NELLY_FILE_CLIPBOARD_B64: encodedFilePaths,
+        },
         shell: false,
         windowsHide: true,
       },
     );
+    let stderr = "";
 
-    child.on("error", () => {
+    child.stderr.setEncoding("utf-8");
+    child.stderr.on("data", (chunk: string) => {
+      stderr += chunk;
+    });
+
+    child.on("error", (error) => {
+      console.warn("Datei-Zwischenablage konnte nicht gestartet werden.", error);
       resolve(false);
     });
 
     child.on("close", (code) => {
+      if (code !== 0) {
+        console.warn("Datei-Zwischenablage nicht verfügbar.", stderr.trim());
+      }
+
       resolve(code === 0);
     });
   });

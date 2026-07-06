@@ -87,7 +87,8 @@ Begruendung:
 - der Renderer sendet nur Dateinamen, keine freien Pfade
 - der Main-Prozess validiert Zielordner, Existenz und Dateityp
 - Dateien werden nicht veraendert, verschoben oder geloescht
-- Windows versucht echte Datei-Zwischenablage ueber `Set-Clipboard -LiteralPath`
+- Windows versucht echte CF_HDROP/FileDropList-Zwischenablage ueber PowerShell/.NET im STA-Modus
+- Dateipfade werden als Base64-JSON ueber eine Umgebungsvariable uebergeben
 - Fallback ist Text mit vollstaendigen Dateipfaden
 - macOS/Linux verwenden vorerst den Textpfad-Fallback
 
