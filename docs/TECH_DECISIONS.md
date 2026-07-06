@@ -115,7 +115,17 @@ Begruendung:
 - Benutzer sieht nur die fertige Datei
 - Original-Zwischendateien koennen entfernt werden
 
-## Entscheidung 11: Windows-Version als funktionale Referenz
+## Entscheidung 11: Papierkorb statt permanenter Loeschung
+
+Begruendung:
+
+- ausgewaehlte Dateien werden nur nach Sicherheitsabfrage verschoben
+- der Renderer sendet nur Dateinamen, keine freien Pfade
+- der Main-Prozess validiert Zielordner, Existenz und Dateityp
+- `shell.trashItem` verschiebt in den Papierkorb statt permanent zu loeschen
+- Teilfehler werden gemeldet, betroffene Dateien bleiben erhalten
+
+## Entscheidung 12: Windows-Version als funktionale Referenz
 
 Begruendung:
 

@@ -1,5 +1,5 @@
 import { renderApp, bindApp } from "./components/app";
-import { showDialog } from "./components/dialog";
+import { showConfirmDialog, showDialog } from "./components/dialog";
 import { DEFAULT_SETTINGS, EMPTY_LINK_DETAILS } from "./config/defaults";
 import { initialState } from "./data/demoState";
 import type {
@@ -241,19 +241,14 @@ async function selectTargetFolder(): Promise<void> {
 async function showFileActionPlaceholder(action: "copy" | "delete"): Promise<void> {
   try {
     const selectedFileIds = getSelectedFileIds();
-    const result = action === "copy"
-      ? await localApi.copySelectedFiles(selectedFileIds)
-      : await localApi.deleteSelectedFiles(selectedFileIds);
 
     if (action === "copy") {
+      const result = await localApi.copySelectedFiles(selectedFileIds);
       showToast(result.message);
       return;
     }
 
-    showDialog({
-      title: "Löschen",
-      text: result.message,
-    });
+    await confirmAndTrashSelectedFiles(selectedFileIds);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Die Dateiaktion ist fehlgeschlagen.";
 
@@ -267,6 +262,31 @@ async function showFileActionPlaceholder(action: "copy" | "delete"): Promise<voi
       text: message,
     });
   }
+}
+
+async function confirmAndTrashSelectedFiles(selectedFileIds: string[]): Promise<void> {
+  if (selectedFileIds.length === 0) {
+    showToast("Bitte zuerst mindestens eine Datei auswählen.");
+    return;
+  }
+
+  const confirmed = await showConfirmDialog({
+    title: "In Papierkorb verschieben",
+    text: selectedFileIds.length === 1
+      ? "1 Datei in den Papierkorb verschieben?"
+      : `${selectedFileIds.length} Dateien in den Papierkorb verschieben?`,
+    confirmText: "In Papierkorb verschieben",
+    cancelText: "Abbrechen",
+    danger: true,
+  });
+
+  if (!confirmed) {
+    return;
+  }
+
+  const result = await localApi.deleteSelectedFiles(selectedFileIds);
+  await refreshTargetFolder();
+  showToast(result.message);
 }
 
 function showToast(message: string): void {

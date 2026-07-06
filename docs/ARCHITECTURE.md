@@ -76,7 +76,7 @@ API-Methoden:
 - `analyzeLink(url)`
 - `startDownload(url)`
 
-`getSettings`, `saveSettings`, `selectTargetFolder`, `listTargetFolder`, `analyzeLink`, `startDownload` und `copySelectedFiles` arbeiten bereits lokal. `deleteSelectedFiles` ist absichtlich noch ein sicherer Platzhalter.
+`getSettings`, `saveSettings`, `selectTargetFolder`, `listTargetFolder`, `analyzeLink`, `startDownload`, `copySelectedFiles` und `deleteSelectedFiles` arbeiten bereits lokal.
 
 ## Link-Analyse
 
@@ -191,7 +191,11 @@ Wenn die Dateiablage nicht verfuegbar ist oder auf anderen Plattformen, werden d
 
 Beim Kopieren werden Dateien nicht veraendert, nicht verschoben und nicht geloescht.
 
-Loeschen ist sichtbar, aber absichtlich deaktiviert und fuehrt keine Dateiaktion aus.
+## Dateien In Den Papierkorb Verschieben
+
+`Ausgewaehlte loeschen` verschiebt Dateien nach Sicherheitsabfrage in den Papierkorb. Es gibt keine permanente Loeschfunktion.
+
+Der Renderer sendet nur Dateinamen aus der aktuellen Zielordner-Liste. Der Main-Prozess prueft Zielordner, Existenz, normale Datei und dass kein Pfad ausserhalb des Zielordners liegt. Unterordner werden nicht akzeptiert. Das Verschieben erfolgt ueber `shell.trashItem`; bei Fehlern bleiben betroffene Dateien erhalten und die GUI zeigt eine verstaendliche Meldung.
 
 ## Lokale Workflows
 

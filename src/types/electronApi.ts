@@ -20,6 +20,8 @@ export type FileActionResult = PlaceholderResult & {
   deleted?: boolean;
   fileIds: string[];
   mode?: "files" | "paths";
+  movedCount?: number;
+  failedCount?: number;
 };
 
 export type StartDownloadResult = PlaceholderResult & {

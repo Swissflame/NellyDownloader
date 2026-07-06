@@ -4,6 +4,7 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import type { AppSettings, DownloadProgressEvent, OutputFile, TargetFolderState } from "../types/app";
 import { copyTargetFilesToClipboard } from "./fileClipboard";
+import { moveTargetFilesToTrash } from "./fileTrash";
 import { analyzeLinkWithYtDlp } from "./ytDlpAnalysis";
 import { downloadLinkWithYtDlp } from "./ytDlpDownload";
 
@@ -15,6 +16,7 @@ const smokeTestAnalyzeUrl = process.env.NELLY_ELECTRON_TEST_ANALYZE_URL;
 const smokeTestDownloadUrl = process.env.NELLY_ELECTRON_TEST_DOWNLOAD_URL;
 const smokeTestCopy = process.env.NELLY_ELECTRON_TEST_COPY === "1";
 const smokeTestSettings = process.env.NELLY_ELECTRON_TEST_SETTINGS === "1";
+const smokeTestTrash = process.env.NELLY_ELECTRON_TEST_TRASH === "1";
 const supportedExtensions = new Set(["mp4", "mkv", "webm", "mov", "avi", "mp3", "m4a", "wav", "opus"]);
 const projectRoot = path.resolve(__dirname, "..", "..", "..");
 
@@ -144,6 +146,7 @@ async function runSmokeTest(): Promise<void> {
         let downloadReady = true;
         let copyReady = true;
         let settingsReady = true;
+        let trashReady = true;
         if (${JSON.stringify(smokeTestSettings)}) {
           const changedSettings = await window.nelly.saveSettings({
             ...reloadedSettings,
@@ -199,6 +202,39 @@ async function runSmokeTest(): Promise<void> {
             && (navigator.platform.toLowerCase().includes('win') ? oneFile.mode === 'files' && multipleFiles.mode === 'files' : true)
             && ids.length >= 2;
         }
+        if (${JSON.stringify(smokeTestTrash)}) {
+          document.querySelector('[data-action="close-settings"]')?.click();
+          await new Promise((resolve) => setTimeout(resolve, 150));
+          const beforeTrash = await window.nelly.listTargetFolder();
+          document.querySelector('[data-action="delete"]')?.click();
+          await new Promise((resolve) => setTimeout(resolve, 150));
+          const noSelectionToast = document.querySelector('[data-toast]')?.textContent ?? '';
+
+          const firstCheckbox = document.querySelector('[data-file-id]');
+          if (firstCheckbox instanceof HTMLInputElement) firstCheckbox.checked = true;
+          document.querySelector('[data-action="delete"]')?.click();
+          await new Promise((resolve) => setTimeout(resolve, 150));
+          document.querySelector('[data-confirm-cancel]')?.click();
+          await new Promise((resolve) => setTimeout(resolve, 150));
+          const afterCancel = await window.nelly.listTargetFolder();
+
+          const ids = beforeTrash.files.map((file) => file.id);
+          const oneFile = await window.nelly.deleteSelectedFiles(ids.slice(0, 1));
+          const afterOneTrash = await window.nelly.listTargetFolder();
+
+          const multipleFiles = await window.nelly.deleteSelectedFiles(ids.slice(1));
+          const afterMultipleTrash = await window.nelly.listTargetFolder();
+
+          trashReady = noSelectionToast.includes('Bitte zuerst mindestens eine Datei')
+            && afterCancel.files.length === beforeTrash.files.length
+            && oneFile.deleted === true
+            && oneFile.movedCount === 1
+            && multipleFiles.deleted === true
+            && multipleFiles.movedCount === beforeTrash.files.length - 1
+            && afterOneTrash.files.length === beforeTrash.files.length - 1
+            && afterMultipleTrash.files.length === 0
+            && beforeTrash.files.length >= 3;
+        }
         return settingsPanelVisible
           && saved.saved === true
           && reloadedSettings.targetFolder === ${JSON.stringify(smokeTestTargetFolder)}
@@ -207,7 +243,8 @@ async function runSmokeTest(): Promise<void> {
           && analysisReady
           && downloadReady
           && copyReady
-          && settingsReady;
+          && settingsReady
+          && trashReady;
       })()
     `
     : `
@@ -382,11 +419,10 @@ function registerIpc(): void {
     return copyTargetFilesToClipboard(fileIds, settings.targetFolder);
   });
 
-  ipcMain.handle("files:delete-selected", (_event, fileIds: string[]) => ({
-    deleted: false,
-    fileIds,
-    message: "Löschen ist noch deaktiviert und führt keine Dateiaktion aus.",
-  }));
+  ipcMain.handle("files:delete-selected", async (_event, fileIds: string[]) => {
+    const settings = await readSettings();
+    return moveTargetFilesToTrash(fileIds, settings.targetFolder);
+  });
 
   ipcMain.handle("link:analyze", async (_event, url: string) => {
     console.log("analyzeLink IPC aufgerufen");
