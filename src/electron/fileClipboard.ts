@@ -34,8 +34,8 @@ export async function copyTargetFilesToClipboard(
       fileIds,
       mode: "files",
       message: filePaths.length === 1
-        ? "1 Datei wurde in die Zwischenablage kopiert."
-        : `${filePaths.length} Dateien wurden in die Zwischenablage kopiert.`,
+        ? "1 Datei wurde als Datei in die Zwischenablage kopiert."
+        : `${filePaths.length} Dateien wurden als Dateien in die Zwischenablage kopiert.`,
     };
   }
 
@@ -59,6 +59,7 @@ function tryWriteWindowsFileClipboard(filePaths: string[]): Promise<boolean> {
       "$files = ConvertFrom-Json -InputObject $json",
       "$collection = New-Object System.Collections.Specialized.StringCollection",
       "foreach ($file in $files) { [void] $collection.Add([string] $file) }",
+      "[System.Windows.Forms.Clipboard]::Clear()",
       "[System.Windows.Forms.Clipboard]::SetFileDropList($collection)",
     ].join("; ");
     const child = spawn(

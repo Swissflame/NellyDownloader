@@ -104,6 +104,7 @@ Begruendung:
 - Dateien werden nicht veraendert, verschoben oder geloescht
 - Windows versucht echte CF_HDROP/FileDropList-Zwischenablage ueber PowerShell/.NET im STA-Modus
 - Dateipfade werden als Base64-JSON ueber eine Umgebungsvariable uebergeben
+- bei erfolgreicher Dateiablage wird kein Text-Fallback gesetzt
 - Fallback ist Text mit vollstaendigen Dateipfaden
 - macOS/Linux verwenden vorerst den Textpfad-Fallback
 

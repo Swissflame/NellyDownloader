@@ -17,6 +17,9 @@ const smokeTestTargetFolder = process.env.NELLY_ELECTRON_TEST_TARGET_FOLDER;
 const smokeTestUserData = process.env.NELLY_ELECTRON_TEST_USER_DATA;
 const smokeTestAnalyzeUrl = process.env.NELLY_ELECTRON_TEST_ANALYZE_URL;
 const smokeTestDownloadUrl = process.env.NELLY_ELECTRON_TEST_DOWNLOAD_URL;
+const smokeTestSecondDownloadUrl = process.env.NELLY_ELECTRON_TEST_SECOND_DOWNLOAD_URL;
+const smokeTestDownloadMarker = getUrlFileMarker(smokeTestDownloadUrl);
+const smokeTestSecondDownloadMarker = getUrlFileMarker(smokeTestSecondDownloadUrl);
 const smokeTestCopy = process.env.NELLY_ELECTRON_TEST_COPY === "1";
 const smokeTestSettings = process.env.NELLY_ELECTRON_TEST_SETTINGS === "1";
 const smokeTestTrash = process.env.NELLY_ELECTRON_TEST_TRASH === "1";
@@ -58,6 +61,18 @@ function getDefaultSettings(): AppSettings {
     ffprobePath: null,
     keyboardShortcuts: DEFAULT_KEYBOARD_SHORTCUTS,
   };
+}
+
+function getUrlFileMarker(rawUrl: string | undefined): string {
+  if (!rawUrl) {
+    return "";
+  }
+
+  try {
+    return path.basename(new URL(rawUrl).pathname, path.extname(new URL(rawUrl).pathname));
+  } catch {
+    return "";
+  }
 }
 
 function getSettingsPath(): string {
@@ -216,10 +231,42 @@ async function runSmokeTest(): Promise<void> {
           }
           const afterDownload = await window.nelly.listTargetFolder();
           const statusText = document.querySelector('[data-status]')?.textContent ?? '';
+          const firstDetailsText = document.querySelector('.details-panel')?.textContent ?? '';
           downloadReady = (statusText.includes('Download abgeschlossen')
               || statusText.includes('Umwandlung abgeschlossen')
               || statusText.includes('Originaldatei wurde in den Papierkorb verschoben'))
             && afterDownload.files.length > beforeDownload.files.length;
+          if (${JSON.stringify(Boolean(smokeTestSecondDownloadUrl))}) {
+            const secondInput = document.querySelector('#download-link');
+            if (!(secondInput instanceof HTMLInputElement)) return false;
+            secondInput.value = ${JSON.stringify(smokeTestSecondDownloadUrl ?? "")};
+            secondInput.dispatchEvent(new Event('input', { bubbles: true }));
+            await new Promise((resolve) => setTimeout(resolve, 150));
+            const resetDetailsText = document.querySelector('.details-panel')?.textContent ?? '';
+            const resetReady = resetDetailsText.includes('Noch nicht analysiert')
+              && !resetDetailsText.includes(${JSON.stringify(smokeTestDownloadMarker)});
+            document.querySelector('.link-form')?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+            for (let attempt = 0; attempt < 360; attempt += 1) {
+              const secondStatusText = document.querySelector('[data-status]')?.textContent ?? '';
+              if (secondStatusText.includes('Download abgeschlossen')
+                || secondStatusText.includes('Umwandlung abgeschlossen')
+                || secondStatusText.includes('Originaldatei wurde in den Papierkorb verschoben')
+                || secondStatusText.includes('Download fehlgeschlagen')) break;
+              await new Promise((resolve) => setTimeout(resolve, 500));
+            }
+            const afterSecondDownload = await window.nelly.listTargetFolder();
+            const secondStatusText = document.querySelector('[data-status]')?.textContent ?? '';
+            const secondDetailsText = document.querySelector('.details-panel')?.textContent ?? '';
+            downloadReady = downloadReady
+              && resetReady
+              && (secondStatusText.includes('Download abgeschlossen')
+                || secondStatusText.includes('Umwandlung abgeschlossen')
+                || secondStatusText.includes('Originaldatei wurde in den Papierkorb verschoben'))
+              && afterSecondDownload.files.length > afterDownload.files.length
+              && secondDetailsText !== firstDetailsText
+              && secondDetailsText.includes(${JSON.stringify(smokeTestSecondDownloadMarker)})
+              && !secondDetailsText.includes(${JSON.stringify(smokeTestDownloadMarker)});
+          }
         }
         if (${JSON.stringify(smokeTestCopy)}) {
           const noSelection = await window.nelly.copySelectedFiles([]);

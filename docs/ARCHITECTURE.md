@@ -253,9 +253,9 @@ Der Renderer erhaelt nur strukturierte Daten mit Dateiname, Groesse, Aenderungsd
 - die Datei existiert
 - die Datei ist eine normale Datei und kein Ordner
 
-Unter Windows wird zuerst versucht, die Dateien als echte CF_HDROP/FileDropList in die Zwischenablage zu legen. Dafuer startet der Main-Prozess `powershell.exe` mit `-NoProfile`, `-NonInteractive`, `-STA` und einer festen .NET-Clipboard-Routine. Dateipfade werden nicht in PowerShell-Code interpoliert, sondern als Base64-kodiertes JSON ueber eine Umgebungsvariable uebergeben.
+Unter Windows wird zuerst versucht, die Dateien als echte CF_HDROP/FileDropList in die Zwischenablage zu legen. Dafuer startet der Main-Prozess `powershell.exe` mit `-NoProfile`, `-NonInteractive`, `-STA` und einer festen .NET-Clipboard-Routine. Dateipfade werden nicht in PowerShell-Code interpoliert, sondern als Base64-kodiertes JSON ueber eine Umgebungsvariable uebergeben. Vor dem Setzen der Dateiablage wird die Zwischenablage geleert, damit Messenger nicht versehentlich alten Text bevorzugen.
 
-Wenn die Dateiablage nicht verfuegbar ist oder auf anderen Plattformen, werden die vollstaendigen Dateipfade als Text in die Zwischenablage geschrieben und die GUI meldet diesen Fallback klar.
+Wenn die Dateiablage nicht verfuegbar ist oder auf anderen Plattformen, werden die vollstaendigen Dateipfade als Text in die Zwischenablage geschrieben und die GUI meldet diesen Fallback klar. Textpfade werden nur im Fallback gesetzt.
 
 Beim Kopieren werden Dateien nicht veraendert, nicht verschoben und nicht geloescht.
 

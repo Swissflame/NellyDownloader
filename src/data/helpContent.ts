@@ -116,9 +116,10 @@ export const helpChapters: HelpChapter[] = [
     body: [
       "Ausgewaehlte kopieren legt die markierten Dateien in die System-Zwischenablage.",
       "Unter Windows wird eine echte Dateiablage verwendet, sodass Einfuegen in WhatsApp Desktop oder Explorer moeglich ist.",
+      "Andere Messenger wie Viber koennen je nach Version abweichend reagieren. Falls ein Messenger die Dateiablage nicht akzeptiert, fuege die Datei per Drag & Drop aus dem Zielordner ein.",
       "Falls Dateiablage nicht verfuegbar ist, werden Dateipfade als Text kopiert und die App meldet diesen Fallback.",
     ],
-    keywords: ["kopieren", "zwischenablage", "whatsapp desktop", "explorer"],
+    keywords: ["kopieren", "zwischenablage", "whatsapp desktop", "explorer", "viber"],
   },
   {
     id: "trash-files",

@@ -1,6 +1,6 @@
 import { renderApp, bindApp } from "./components/app";
 import { showConfirmDialog, showDialog } from "./components/dialog";
-import { DEFAULT_SETTINGS, EMPTY_LINK_DETAILS } from "./config/defaults";
+import { DEFAULT_SETTINGS, EMPTY_LINK_DETAILS, IDLE_PROGRESS } from "./config/defaults";
 import { UI_ASSETS } from "./config/assets";
 import { DEFAULT_KEYBOARD_SHORTCUTS } from "./config/shortcuts";
 import { initialState } from "./data/demoState";
@@ -157,7 +157,16 @@ document.addEventListener("change", (event) => {
 document.addEventListener("input", (event) => {
   const target = event.target;
 
-  if (!(target instanceof HTMLInputElement) || !target.matches("[data-help-search]")) {
+  if (!(target instanceof HTMLInputElement)) {
+    return;
+  }
+
+  if (target.id === "download-link") {
+    updateLinkInput(target);
+    return;
+  }
+
+  if (!target.matches("[data-help-search]")) {
     return;
   }
 
@@ -170,6 +179,35 @@ document.addEventListener("input", (event) => {
   nextSearchInput?.focus();
   nextSearchInput?.setSelectionRange(nextSearchInput.value.length, nextSearchInput.value.length);
 });
+
+function updateLinkInput(input: HTMLInputElement): void {
+  const nextValue = input.value;
+  const linkChanged = nextValue.trim() !== state.linkInput.trim();
+  const shouldResetDetails = linkChanged && !isLinkDetailsEmpty(state.linkDetails);
+
+  state = {
+    ...state,
+    linkInput: nextValue,
+    ...(shouldResetDetails ? {
+      linkDetails: createEmptyLinkDetails(),
+      progress: IDLE_PROGRESS,
+    } : {}),
+  };
+
+  if (!shouldResetDetails) {
+    return;
+  }
+
+  const selectionStart = input.selectionStart;
+  const selectionEnd = input.selectionEnd;
+  render();
+  const nextInput = document.querySelector<HTMLInputElement>("#download-link");
+  nextInput?.focus();
+
+  if (selectionStart !== null && selectionEnd !== null) {
+    nextInput?.setSelectionRange(selectionStart, selectionEnd);
+  }
+}
 
 document.addEventListener("keydown", (event) => {
   void handleKeyboardShortcut(event);
@@ -572,11 +610,7 @@ async function startDownloadFromClipboard(): Promise<void> {
       return;
     }
 
-    state = {
-      ...state,
-      linkInput: url,
-    };
-    render();
+    setCurrentLinkForNewWorkflow(url, "Noch nicht analysiert");
     showToast("Link aus Zwischenablage übernommen.");
     await startDownloadWorkflow(url);
   } catch (error) {
@@ -621,7 +655,7 @@ async function analyzeLink(url: string): Promise<AnalyzeLinkResult | null> {
       status: "Link wird analysiert...",
     },
     linkDetails: {
-      ...EMPTY_LINK_DETAILS,
+      ...createEmptyLinkDetails(),
       platform: "Analysiere...",
       cookiesHint: "yt-dlp liest gerade nur Metadaten. Es wird nichts heruntergeladen.",
     },
@@ -648,7 +682,7 @@ async function analyzeLink(url: string): Promise<AnalyzeLinkResult | null> {
       ...state,
       analysisInProgress: false,
       linkDetails: {
-        ...EMPTY_LINK_DETAILS,
+        ...createEmptyLinkDetails(),
         error: error instanceof Error ? error.message : "Die Link-Analyse ist fehlgeschlagen.",
       },
       progress: {
@@ -674,7 +708,7 @@ async function startDownloadWorkflow(url: string): Promise<void> {
     state = {
       ...state,
       linkDetails: {
-        ...EMPTY_LINK_DETAILS,
+        ...createEmptyLinkDetails(),
         error: "Bitte gib zuerst einen Link ein.",
       },
       progress: {
@@ -688,18 +722,33 @@ async function startDownloadWorkflow(url: string): Promise<void> {
     return;
   }
 
-  state = {
-    ...state,
-    downloadInProgress: true,
-  };
-  render();
-
   const analyzedForCurrentLink = state.linkInput === trimmedUrl
     && state.linkDetails.error === null
     && state.linkDetails.platform !== EMPTY_LINK_DETAILS.platform
     && state.linkDetails.platform !== "Analysiere...";
+  const detailsForCurrentLink = analyzedForCurrentLink
+    ? state.linkDetails
+    : createEmptyLinkDetails({
+        platform: "Download laeuft...",
+        cookiesHint: "Metadaten werden fuer den aktuellen Link vorbereitet.",
+      });
   const shouldAnalyzeBeforeDownload = state.settings.downloadMode === "analyze-first"
     || (state.settings.downloadMode === "auto" && analyzedForCurrentLink);
+
+  state = {
+    ...state,
+    linkInput: trimmedUrl,
+    downloadInProgress: true,
+    analysisInProgress: false,
+    linkDetails: detailsForCurrentLink,
+    progress: {
+      total: 0,
+      download: 0,
+      conversion: 0,
+      status: shouldAnalyzeBeforeDownload && !analyzedForCurrentLink ? "Analysiere..." : "Download laeuft...",
+    },
+  };
+  render();
 
   let downloadUrl = trimmedUrl;
 
@@ -742,9 +791,13 @@ async function startDownloadWorkflow(url: string): Promise<void> {
 
   try {
     const result = await localApi.startDownload(downloadUrl);
+    const completedDetails = analyzedForCurrentLink
+      ? detailsForCurrentLink
+      : createDownloadedLinkDetails(result.outputPath, state.settings.preferredFormat);
 
     state = {
       ...state,
+      linkInput: result.url,
       downloadInProgress: false,
       progress: {
         total: 100,
@@ -753,14 +806,7 @@ async function startDownloadWorkflow(url: string): Promise<void> {
         status: result.message,
       },
       linkDetails: {
-        ...(analyzedForCurrentLink ? state.linkDetails : {
-          ...EMPTY_LINK_DETAILS,
-          platform: "Direkt heruntergeladen",
-          title: result.outputPath ? getFileName(result.outputPath) : "-",
-          videoId: result.outputPath ? getVideoIdFromFileName(result.outputPath) : "-",
-          expectedOutput: state.settings.preferredFormat,
-          cookiesHint: "Metadaten wurden im Downloadprozess verarbeitet.",
-        }),
+        ...completedDetails,
         error: null,
       },
     };
@@ -777,12 +823,50 @@ async function startDownloadWorkflow(url: string): Promise<void> {
         status: "Download fehlgeschlagen",
       },
       linkDetails: {
-        ...state.linkDetails,
+        ...createEmptyLinkDetails(),
         error: error instanceof Error ? error.message : "Der Download ist fehlgeschlagen.",
       },
     };
     render();
   }
+}
+
+function setCurrentLinkForNewWorkflow(url: string, platform: string): void {
+  state = {
+    ...state,
+    linkInput: url,
+    linkDetails: createEmptyLinkDetails({ platform }),
+    progress: IDLE_PROGRESS,
+  };
+  render();
+}
+
+function createEmptyLinkDetails(overrides: Partial<typeof EMPTY_LINK_DETAILS> = {}): typeof EMPTY_LINK_DETAILS {
+  return {
+    ...EMPTY_LINK_DETAILS,
+    expectedOutput: state.settings.preferredFormat,
+    ...overrides,
+  };
+}
+
+function createDownloadedLinkDetails(outputPath: string | null, preferredFormat: string): typeof EMPTY_LINK_DETAILS {
+  return {
+    ...EMPTY_LINK_DETAILS,
+    platform: "Direkt heruntergeladen",
+    title: outputPath ? getFileName(outputPath) : "-",
+    videoId: outputPath ? getVideoIdFromFileName(outputPath) : "-",
+    expectedOutput: preferredFormat,
+    cookiesHint: "Metadaten wurden im Downloadprozess verarbeitet.",
+  };
+}
+
+function isLinkDetailsEmpty(details: typeof EMPTY_LINK_DETAILS): boolean {
+  return details.platform === EMPTY_LINK_DETAILS.platform
+    && details.title === EMPTY_LINK_DETAILS.title
+    && details.creator === EMPTY_LINK_DETAILS.creator
+    && details.videoId === EMPTY_LINK_DETAILS.videoId
+    && details.thumbnailUrl === EMPTY_LINK_DETAILS.thumbnailUrl
+    && details.error === EMPTY_LINK_DETAILS.error;
 }
 
 function getFileName(filePath: string): string {
