@@ -7,6 +7,7 @@ import type {
   AppState,
   DownloadMode,
   DownloadProgressEvent,
+  OriginalAfterConversionMode,
   TargetFolderState,
   WhatsAppCompatibilityMode,
 } from "./types/app";
@@ -127,6 +128,17 @@ document.addEventListener("change", (event) => {
       settings: {
         ...state.settings,
         whatsappCompatibilityMode: target.value as WhatsAppCompatibilityMode,
+      },
+    };
+    return;
+  }
+
+  if (field === "originalAfterConversionMode") {
+    state = {
+      ...state,
+      settings: {
+        ...state.settings,
+        originalAfterConversionMode: target.value as OriginalAfterConversionMode,
       },
     };
   }

@@ -89,7 +89,9 @@ Begruendung:
 - `ffprobe` prueft Container und Codecs nach dem Download
 - kompatible Dateien muessen im Auto-Modus nicht umgewandelt werden
 - bei Bedarf erzeugt `ffmpeg` eine neue MP4/H.264/AAC-Datei
-- Originaldateien bleiben erhalten
+- Originaldateien bleiben standardmaessig erhalten
+- optional wird nur die Originaldatei des aktuellen Download-/Umwandlungslaufs per `shell.trashItem` in den Papierkorb verschoben
+- vor dem Verschieben wird die neue MP4 auf Existenz, Groesse und ffprobe-Lesbarkeit geprueft
 - Toolsuche laeuft ueber Einstellungen, Windows-Referenzdateien und `PATH`
 - Fortschritt der Umwandlung wird als strukturiertes Event an den Renderer geschickt
 

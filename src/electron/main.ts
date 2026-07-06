@@ -32,6 +32,7 @@ function getDefaultSettings(): AppSettings {
     whatsappCompatibleOutput: true,
     downloadMode: "auto",
     whatsappCompatibilityMode: "auto",
+    originalAfterConversionMode: "keep",
     cookieMode: "auto",
     browser: "Automatisch",
     ytDlpPath: null,
@@ -147,12 +148,14 @@ async function runSmokeTest(): Promise<void> {
           const changedSettings = await window.nelly.saveSettings({
             ...reloadedSettings,
             downloadMode: 'direct',
-            whatsappCompatibilityMode: 'never'
+            whatsappCompatibilityMode: 'never',
+            originalAfterConversionMode: 'trash'
           });
           const checkedSettings = await window.nelly.getSettings();
           settingsReady = changedSettings.saved === true
             && checkedSettings.downloadMode === 'direct'
-            && checkedSettings.whatsappCompatibilityMode === 'never';
+            && checkedSettings.whatsappCompatibilityMode === 'never'
+            && checkedSettings.originalAfterConversionMode === 'trash';
         }
         if (${JSON.stringify(Boolean(smokeTestAnalyzeUrl))}) {
           document.querySelector('[data-action="close-settings"]')?.click();
@@ -171,12 +174,18 @@ async function runSmokeTest(): Promise<void> {
           document.querySelector('.link-form')?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
           for (let attempt = 0; attempt < 360; attempt += 1) {
             const statusText = document.querySelector('[data-status]')?.textContent ?? '';
-            if (statusText.includes('Download abgeschlossen') || statusText.includes('Download fehlgeschlagen')) break;
+            if (statusText.includes('Download abgeschlossen')
+              || statusText.includes('Umwandlung abgeschlossen')
+              || statusText.includes('Originaldatei wurde in den Papierkorb verschoben')
+              || statusText.includes('Download fehlgeschlagen')) break;
             await new Promise((resolve) => setTimeout(resolve, 500));
           }
           const afterDownload = await window.nelly.listTargetFolder();
           const statusText = document.querySelector('[data-status]')?.textContent ?? '';
-          downloadReady = statusText.includes('Download abgeschlossen') && afterDownload.files.length > beforeDownload.files.length;
+          downloadReady = (statusText.includes('Download abgeschlossen')
+              || statusText.includes('Umwandlung abgeschlossen')
+              || statusText.includes('Originaldatei wurde in den Papierkorb verschoben'))
+            && afterDownload.files.length > beforeDownload.files.length;
         }
         if (${JSON.stringify(smokeTestCopy)}) {
           const noSelection = await window.nelly.copySelectedFiles([]);

@@ -40,6 +40,16 @@ export function renderSettingsPanel(settings: AppSettings, visible: boolean): st
               </select>
             </dd>
           </div>
+          <div>
+            <dt>Originaldatei nach Umwandlung</dt>
+            <dd>
+              <select data-settings-field="originalAfterConversionMode" aria-label="Originaldatei nach Umwandlung">
+                <option value="keep" ${settings.originalAfterConversionMode === "keep" ? "selected" : ""}>Behalten</option>
+                <option value="trash" ${settings.originalAfterConversionMode === "trash" ? "selected" : ""}>Nach erfolgreicher Umwandlung in Papierkorb verschieben</option>
+              </select>
+              <p class="field-note">Gilt nur, wenn wirklich eine zusätzliche WhatsApp-kompatible MP4 erzeugt wurde.</p>
+            </dd>
+          </div>
           <div><dt>yt-dlp</dt><dd>${escapeHtml(settings.ytDlpPath ?? "Automatisch suchen")}</dd></div>
         </dl>
         <p class="settings-note">Einstellungen werden automatisch in der lokalen App-Konfiguration gespeichert.</p>

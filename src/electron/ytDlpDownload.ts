@@ -1,3 +1,4 @@
+import { shell } from "electron";
 import { spawn } from "node:child_process";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
@@ -192,10 +193,26 @@ async function handleWhatsAppCompatibility(
   const ffmpeg = await resolveToolPath(settings.ffmpegPath, projectRoot, "ffmpeg");
   const convertedPath = createConvertedOutputPath(outputPath);
   await convertForWhatsApp(ffmpeg.command, outputPath, convertedPath, compatibility.durationSeconds, onProgress);
+  const convertedFileIsValid = await validateConvertedFile(ffprobe.command, convertedPath);
+
+  if (!convertedFileIsValid) {
+    throw new Error("Umwandlung abgeschlossen, aber die neue MP4 konnte nicht sicher geprüft werden.");
+  }
+
+  if (settings.originalAfterConversionMode === "trash") {
+    const trashed = await trashOriginalAfterConversion(outputPath, convertedPath, settings.targetFolder);
+
+    return {
+      outputPath: convertedPath,
+      message: trashed
+        ? "Originaldatei wurde in den Papierkorb verschoben"
+        : "Umwandlung abgeschlossen, Originaldatei konnte nicht verschoben werden",
+    };
+  }
 
   return {
     outputPath: convertedPath,
-    message: "Download abgeschlossen",
+    message: "Umwandlung abgeschlossen",
   };
 }
 
@@ -231,6 +248,55 @@ function createConvertedOutputPath(inputPath: string): string {
     .slice(0, 17);
 
   return path.join(parsedPath.dir, `${parsedPath.name} - WhatsApp ${runId}.mp4`);
+}
+
+async function validateConvertedFile(ffprobeCommand: string, convertedPath: string): Promise<boolean> {
+  try {
+    const stats = await fs.stat(convertedPath);
+
+    if (!stats.isFile() || stats.size <= 0) {
+      return false;
+    }
+
+    const compatibility = await probeWhatsAppCompatibility(ffprobeCommand, convertedPath);
+    return compatibility.compatible;
+  } catch (error) {
+    console.warn("Umgewandelte Datei konnte nicht validiert werden.", error);
+    return false;
+  }
+}
+
+async function trashOriginalAfterConversion(
+  originalPath: string,
+  convertedPath: string,
+  targetFolder: string,
+): Promise<boolean> {
+  try {
+    if (!isFileInsideFolder(originalPath, targetFolder) || !isFileInsideFolder(convertedPath, targetFolder)) {
+      console.warn("Originaldatei wird nicht verschoben, weil ein Pfad ausserhalb des Zielordners liegt.");
+      return false;
+    }
+
+    const [originalStats, convertedStats] = await Promise.all([
+      fs.stat(originalPath),
+      fs.stat(convertedPath),
+    ]);
+
+    if (!originalStats.isFile() || !convertedStats.isFile() || convertedStats.size <= 0) {
+      return false;
+    }
+
+    await shell.trashItem(originalPath);
+    return true;
+  } catch (error) {
+    console.warn("Originaldatei konnte nicht in den Papierkorb verschoben werden.", error);
+    return false;
+  }
+}
+
+function isFileInsideFolder(filePath: string, folderPath: string): boolean {
+  const relativePath = path.relative(path.resolve(folderPath), path.resolve(filePath));
+  return Boolean(relativePath) && !relativePath.startsWith("..") && !path.isAbsolute(relativePath);
 }
 
 function convertForWhatsApp(

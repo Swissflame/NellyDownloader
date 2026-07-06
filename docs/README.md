@@ -30,6 +30,7 @@ Aktuell aktiv:
 - bestehende Dateien werden nicht ueberschrieben
 - Instagram kann Browser-Cookies verwenden
 - WhatsApp-Kompatibilitaet: Auto, immer umwandeln oder nie umwandeln
+- Originaldatei nach Umwandlung: behalten oder nach erfolgreicher Umwandlung in den Papierkorb verschieben
 - ffprobe/ffmpeg werden fuer Kompatibilitaetspruefung und optionale Umwandlung genutzt
 - ausgewaehlte Dateien koennen in die System-Zwischenablage kopiert werden
 - Dateien werden beim Kopieren nicht veraendert

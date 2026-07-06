@@ -40,6 +40,7 @@ export type TargetFolderState = {
 export type CookieMode = "auto" | "browser" | "file" | "none";
 export type DownloadMode = "auto" | "analyze-first" | "direct";
 export type WhatsAppCompatibilityMode = "auto" | "always" | "never";
+export type OriginalAfterConversionMode = "keep" | "trash";
 
 export type AppSettings = {
   targetFolder: string;
@@ -47,6 +48,7 @@ export type AppSettings = {
   whatsappCompatibleOutput: boolean;
   downloadMode: DownloadMode;
   whatsappCompatibilityMode: WhatsAppCompatibilityMode;
+  originalAfterConversionMode: OriginalAfterConversionMode;
   cookieMode: CookieMode;
   browser: string;
   ytDlpPath: string | null;

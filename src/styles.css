@@ -406,6 +406,13 @@ select {
   padding: 0.35rem 0.55rem;
 }
 
+.field-note {
+  margin: 0.45rem 0 0;
+  color: #aab3c2;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
 .toast-message {
   position: fixed;
   right: 1rem;

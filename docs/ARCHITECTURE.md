@@ -144,6 +144,13 @@ Der Modus wird in den Einstellungen gespeichert:
 
 Originaldateien werden bei der Umwandlung vorerst behalten und nicht geloescht.
 
+Die Einstellung `Originaldatei nach Umwandlung` steuert das Verhalten nach einer erfolgreichen ffmpeg-Konvertierung:
+
+- `Behalten` ist der Standard und laesst Original und WhatsApp-MP4 im Zielordner
+- `Nach erfolgreicher Umwandlung in Papierkorb verschieben` verschiebt nur die durch den aktuellen Download entstandene Originaldatei in den Papierkorb
+
+Das Verschieben passiert nur, wenn eine zusaetzliche MP4 erzeugt wurde, diese Datei existiert, groesser als 0 Byte ist, mit `ffprobe` lesbar und kompatibel ist, und Original sowie MP4 im aktuellen Zielordner liegen. Es wird `shell.trashItem` verwendet; bei Fehlern bleibt das Original erhalten.
+
 `ffprobe` und `ffmpeg` werden in dieser Reihenfolge gesucht:
 
 1. gespeicherter Pfad aus den Einstellungen

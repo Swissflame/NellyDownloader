@@ -8,6 +8,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   whatsappCompatibleOutput: true,
   downloadMode: "auto",
   whatsappCompatibilityMode: "auto",
+  originalAfterConversionMode: "keep",
   cookieMode: "auto",
   browser: "Automatisch",
   ytDlpPath: null,
