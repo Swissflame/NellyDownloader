@@ -34,6 +34,7 @@ Aktuell aktiv:
 - ffprobe/ffmpeg werden fuer Kompatibilitaetspruefung und optionale Umwandlung genutzt
 - ausgewaehlte Dateien koennen in die System-Zwischenablage kopiert werden
 - ausgewaehlte Dateien koennen nach Sicherheitsabfrage in den Papierkorb verschoben werden
+- durchsuchbares Hilfe-/Benutzerhandbuch
 - Dateien werden beim Kopieren nicht veraendert
 
 Noch nicht aktiv:

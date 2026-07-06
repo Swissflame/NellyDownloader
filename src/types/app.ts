@@ -63,6 +63,8 @@ export type AppState = {
   targetFolder: TargetFolderState;
   settings: AppSettings;
   settingsVisible: boolean;
+  helpVisible: boolean;
+  helpSearch: string;
   analysisInProgress: boolean;
   downloadInProgress: boolean;
 };

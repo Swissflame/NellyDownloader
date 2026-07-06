@@ -144,6 +144,23 @@ document.addEventListener("change", (event) => {
   }
 });
 
+document.addEventListener("input", (event) => {
+  const target = event.target;
+
+  if (!(target instanceof HTMLInputElement) || !target.matches("[data-help-search]")) {
+    return;
+  }
+
+  state = {
+    ...state,
+    helpSearch: target.value,
+  };
+  render();
+  const nextSearchInput = document.querySelector<HTMLInputElement>("[data-help-search]");
+  nextSearchInput?.focus();
+  nextSearchInput?.setSelectionRange(nextSearchInput.value.length, nextSearchInput.value.length);
+});
+
 async function handleAction(action: string): Promise<void> {
   switch (action) {
     case "settings":
@@ -170,10 +187,12 @@ async function handleAction(action: string): Promise<void> {
       await showFileActionPlaceholder("delete");
       return;
     case "help":
-      showDialog({
-        title: "Hilfe",
-        text: "Das Hilfe-System wird in einem späteren Schritt umgesetzt.",
-      });
+      state = { ...state, helpVisible: true };
+      render();
+      return;
+    case "close-help":
+      state = { ...state, helpVisible: false, helpSearch: "" };
+      render();
       return;
     default:
       showDialog({

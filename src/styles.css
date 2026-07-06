@@ -316,6 +316,73 @@ progress::-moz-progress-bar {
   color: #b9c5d6;
 }
 
+.help-panel {
+  width: min(58rem, calc(100vw - 2rem));
+  max-height: min(44rem, calc(100vh - 2rem));
+  overflow: auto;
+}
+
+.help-search input {
+  width: 100%;
+  min-height: 2.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  padding: 0 0.9rem;
+  background: #0f1218;
+  color: #f4f7fb;
+}
+
+.help-layout {
+  display: grid;
+  grid-template-columns: minmax(11rem, 0.35fr) minmax(0, 1fr);
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+.help-toc {
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+}
+
+.help-toc a {
+  border-radius: 6px;
+  padding: 0.45rem 0.55rem;
+  color: #c9d7eb;
+  text-decoration: none;
+}
+
+.help-toc a:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.help-content {
+  display: grid;
+  gap: 1rem;
+}
+
+.help-chapter {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  padding-bottom: 1rem;
+}
+
+.help-chapter h3 {
+  margin: 0 0 0.55rem;
+}
+
+.help-chapter p {
+  margin: 0.45rem 0;
+  color: #d9e2f0;
+  line-height: 1.55;
+}
+
+mark {
+  border-radius: 4px;
+  padding: 0 0.12rem;
+  background: rgba(250, 204, 21, 0.28);
+  color: #fff2b5;
+}
+
 .folder-path {
   margin-bottom: 0.8rem;
   color: #b9c5d6;
@@ -460,6 +527,10 @@ select {
   }
 
   .link-form {
+    grid-template-columns: 1fr;
+  }
+
+  .help-layout {
     grid-template-columns: 1fr;
   }
 

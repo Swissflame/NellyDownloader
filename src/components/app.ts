@@ -21,7 +21,7 @@ export function renderApp(state: AppState): string {
 
       ${renderTargetFolder(state.targetFolder, state.settings.targetFolder)}
       ${renderSettingsPanel(state.settings, state.settingsVisible)}
-      ${renderHelpPanel()}
+      ${renderHelpPanel(state.helpVisible, state.helpSearch)}
       ${renderDialog()}
     </main>
   `;

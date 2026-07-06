@@ -31,6 +31,12 @@ Aufgaben:
 
 Die UI enthaelt moeglichst wenig Business-Logik. Komponenten liegen unter `src/components`, zentrale Typen unter `src/types`, Standardwerte unter `src/config`.
 
+## Hilfe / Benutzerhandbuch
+
+Der Hilfe-Bereich ist ein durchsuchbares Handbuch im Renderer. Die Inhalte werden in `src/data/helpContent.ts` gepflegt und von `src/components/helpPanel.ts` gerendert.
+
+Die Suche filtert Kapitel nach Titel, Text und Stichworten. Treffer werden im sichtbaren Text markiert. Wenn kein Kapitel passt, zeigt die UI eine freundliche Leermeldung.
+
 ## Electron Main-Prozess
 
 Datei:

@@ -1,19 +1,74 @@
-export function renderHelpPanel(): string {
+import { helpChapters } from "../data/helpContent";
+import { escapeHtml } from "../utils/html";
+
+export function renderHelpPanel(visible: boolean, searchQuery: string): string {
+  if (!visible) {
+    return "";
+  }
+
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const visibleChapters = normalizedQuery
+    ? helpChapters.filter((chapter) => chapterMatches(chapter, normalizedQuery))
+    : helpChapters;
+  const chapterContent = visibleChapters.length > 0
+    ? visibleChapters.map((chapter) => `
+      <article class="help-chapter" id="help-${escapeHtml(chapter.id)}">
+        <h3>${highlightText(chapter.title, normalizedQuery)}</h3>
+        ${chapter.body.map((paragraph) => `<p>${highlightText(paragraph, normalizedQuery)}</p>`).join("")}
+      </article>
+    `).join("")
+    : `<div class="folder-message">Keine passenden Hilfethemen gefunden. Versuche ein anderes Stichwort.</div>`;
+
   return `
-    <section class="panel compact-panel" aria-labelledby="help-heading" hidden>
-      <div class="panel-heading">
-        <div>
-          <p class="eyebrow">Handbuch</p>
-          <h2 id="help-heading">Hilfe</h2>
+    <div class="settings-backdrop" data-help-panel>
+      <section class="panel compact-panel help-panel" aria-labelledby="help-heading" role="dialog" aria-modal="true">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Handbuch</p>
+            <h2 id="help-heading">Hilfe</h2>
+          </div>
+          <button class="ghost-button" type="button" data-action="close-help">Schliessen</button>
         </div>
-      </div>
-      <div class="help-layout">
-        <label>
+        <label class="help-search">
           <span class="visually-hidden">Hilfe durchsuchen</span>
-          <input type="search" placeholder="Hilfe durchsuchen" disabled />
+          <input data-help-search type="search" value="${escapeHtml(searchQuery)}" placeholder="Hilfe durchsuchen" autocomplete="off" />
         </label>
-        <p class="muted">Die Kapitelstruktur ist vorbereitet. Inhalte folgen in einem späteren Schritt.</p>
-      </div>
-    </section>
+        <div class="help-layout">
+          <nav class="help-toc" aria-label="Hilfekapitel">
+            ${visibleChapters.map((chapter) => `
+              <a href="#help-${escapeHtml(chapter.id)}">${highlightText(chapter.title, normalizedQuery)}</a>
+            `).join("")}
+          </nav>
+          <div class="help-content">
+            ${chapterContent}
+          </div>
+        </div>
+      </section>
+    </div>
   `;
+}
+
+function chapterMatches(chapter: typeof helpChapters[number], query: string): boolean {
+  const haystack = [
+    chapter.title,
+    ...chapter.body,
+    ...chapter.keywords,
+  ].join(" ").toLowerCase();
+
+  return haystack.includes(query);
+}
+
+function highlightText(text: string, query: string): string {
+  const escapedText = escapeHtml(text);
+
+  if (!query) {
+    return escapedText;
+  }
+
+  const escapedQuery = escapeRegExp(escapeHtml(query));
+  return escapedText.replace(new RegExp(`(${escapedQuery})`, "gi"), "<mark>$1</mark>");
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

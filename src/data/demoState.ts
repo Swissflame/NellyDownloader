@@ -12,6 +12,8 @@ export const initialState: AppState = {
   },
   settings: DEFAULT_SETTINGS,
   settingsVisible: false,
+  helpVisible: false,
+  helpSearch: "",
   analysisInProgress: false,
   downloadInProgress: false,
 };

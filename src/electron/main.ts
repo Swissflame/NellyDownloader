@@ -17,6 +17,7 @@ const smokeTestDownloadUrl = process.env.NELLY_ELECTRON_TEST_DOWNLOAD_URL;
 const smokeTestCopy = process.env.NELLY_ELECTRON_TEST_COPY === "1";
 const smokeTestSettings = process.env.NELLY_ELECTRON_TEST_SETTINGS === "1";
 const smokeTestTrash = process.env.NELLY_ELECTRON_TEST_TRASH === "1";
+const smokeTestHelp = process.env.NELLY_ELECTRON_TEST_HELP === "1";
 const supportedExtensions = new Set(["mp4", "mkv", "webm", "mov", "avi", "mp3", "m4a", "wav", "opus"]);
 const projectRoot = path.resolve(__dirname, "..", "..", "..");
 
@@ -147,6 +148,7 @@ async function runSmokeTest(): Promise<void> {
         let copyReady = true;
         let settingsReady = true;
         let trashReady = true;
+        let helpReady = true;
         if (${JSON.stringify(smokeTestSettings)}) {
           const changedSettings = await window.nelly.saveSettings({
             ...reloadedSettings,
@@ -235,6 +237,30 @@ async function runSmokeTest(): Promise<void> {
             && afterMultipleTrash.files.length === 0
             && beforeTrash.files.length >= 3;
         }
+        if (${JSON.stringify(smokeTestHelp)}) {
+          document.querySelector('[data-action="close-settings"]')?.click();
+          for (let attempt = 0; attempt < 40; attempt += 1) {
+            if (!document.querySelector('[data-settings-panel]')) break;
+            await new Promise((resolve) => setTimeout(resolve, 50));
+          }
+          document.querySelector('.topnav [data-action="help"]')?.click();
+          for (let attempt = 0; attempt < 40; attempt += 1) {
+            if (document.querySelector('[data-help-panel]')) break;
+            await new Promise((resolve) => setTimeout(resolve, 50));
+          }
+          const panelVisible = document.querySelector('[data-help-panel]') instanceof HTMLElement;
+          const terms = ['Instagram', 'WhatsApp', 'Papierkorb', 'Zielordner', 'Downloadmodus'];
+          const termResults = [];
+          for (const term of terms) {
+            const searchInput = document.querySelector('[data-help-search]');
+            if (!(searchInput instanceof HTMLInputElement)) break;
+            searchInput.value = term;
+            searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+            await new Promise((resolve) => setTimeout(resolve, 150));
+            termResults.push((document.querySelector('.help-content')?.textContent ?? '').toLowerCase().includes(term.toLowerCase()));
+          }
+          helpReady = panelVisible && termResults.length === terms.length && termResults.every(Boolean);
+        }
         return settingsPanelVisible
           && saved.saved === true
           && reloadedSettings.targetFolder === ${JSON.stringify(smokeTestTargetFolder)}
@@ -244,7 +270,8 @@ async function runSmokeTest(): Promise<void> {
           && downloadReady
           && copyReady
           && settingsReady
-          && trashReady;
+          && trashReady
+          && helpReady;
       })()
     `
     : `
@@ -270,6 +297,11 @@ async function runSmokeTest(): Promise<void> {
         JSON.stringify({
           hasNelly: typeof window.nelly,
           hasSettingsButton: Boolean(document.querySelector('[data-action="settings"]')),
+          hasHelpButton: Boolean(document.querySelector('[data-action="help"]')),
+          hasHelpPanel: Boolean(document.querySelector('[data-help-panel]')),
+          helpText: document.querySelector('[data-help-panel]')?.textContent?.slice(0, 200) ?? '',
+          hasHelpSearch: Boolean(document.querySelector('[data-help-search]')),
+          settingsPanel: Boolean(document.querySelector('[data-settings-panel]')),
           detailsText: document.querySelector('.details-panel')?.textContent ?? '',
           bodyText: document.body.innerText.slice(0, 200)
         })
