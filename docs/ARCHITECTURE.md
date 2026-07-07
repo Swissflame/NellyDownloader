@@ -75,7 +75,7 @@ Der Renderer bindet sichtbare UI-Bilder ueber `src/config/assets.ts` ein. Vite e
 
 Der Electron Main-Prozess setzt das Fenstericon ueber eine kleine Asset-Pfad-Hilfe aus `src/electron/assetPaths.ts`. Im Dev-Modus basiert der Pfad auf dem Projektroot, im packaged Modus auf `process.resourcesPath`.
 
-Das Installer-Icon wird fuer den NSIS-Build verwendet. Header- und Sidebar-Grafiken sind vorbereitet, werden aber noch nicht eingebunden, weil die aktuelle NSIS-Konfiguration nur sichere Icon-Assets nutzt.
+Das Installer-Icon sowie abgeleitete Header- und Sidebar-BMPs werden fuer den NSIS-Build verwendet.
 
 ## Packaging / Windows-Installer
 
@@ -88,6 +88,8 @@ Wichtige Punkte:
 - Ausgabeordner: `src/release/`
 - Windows-App-Icon: `assets/icons/app-icon.ico`
 - Installer-Icon: `assets/installer/installer-icon.ico`
+- NSIS-Header: `assets/installer/installer-header.bmp`
+- NSIS-Sidebar: `assets/installer/installer-sidebar.bmp`
 - Startmenue- und Desktop-Verknuepfung werden erzeugt
 
 Der installierte Build nutzt die Assets zusaetzlich als `extraResources` unter `resources/assets/`. Die Renderer-Bilder werden durch den Vite-Build in `dist/` bereitgestellt und dort relativ geladen.

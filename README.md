@@ -48,8 +48,10 @@ npm run package
 npm run dist:win
 ```
 
-Der Windows-Installer landet nach `npm run dist:win` unter `src/release/`. Der Ordner wird nicht committed.
+Der Windows-Installer landet nach `npm run dist:win` unter `src/release/`, z.B. als `NellyDownloader-Setup-0.1.0.exe`. Der Ordner wird nicht committed.
 
 Fuer den Installer-Build muessen `reference/Windows/yt-dlp.exe`, `reference/Windows/ffmpeg.exe` und `reference/Windows/ffprobe.exe` lokal vorhanden sein. Sie werden beim Build nur gelesen und in den Installer aufgenommen.
+
+Der Installer verwendet die Icons und NSIS-Grafiken aus `assets/installer` sowie das App-Icon aus `assets/icons`.
 
 Die Entwicklungsreferenzen unter `reference/` duerfen nur gelesen und nicht veraendert werden.

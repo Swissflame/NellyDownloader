@@ -22,6 +22,7 @@
     "copyright": "Copyright (c) 2026 NellyDownloader",
     "asar": true,
     "electronDist": "node_modules/electron/dist",
+    "artifactName": "NellyDownloader-Setup-${version}.${ext}",
     "directories": {
       "output": "release"
     },
@@ -59,7 +60,8 @@
           ]
         }
       ],
-      "icon": "../assets/icons/app-icon.ico"
+      "icon": "../assets/icons/app-icon.ico",
+      "executableName": "NellyDownloader"
     },
     "nsis": {
       "oneClick": false,
@@ -69,7 +71,13 @@
       "createStartMenuShortcut": true,
       "shortcutName": "NellyDownloader",
       "installerIcon": "../assets/installer/installer-icon.ico",
-      "uninstallerIcon": "../assets/installer/installer-icon.ico"
+      "uninstallerIcon": "../assets/installer/installer-icon.ico",
+      "installerHeader": "../assets/installer/installer-header.bmp",
+      "installerSidebar": "../assets/installer/installer-sidebar.bmp",
+      "uninstallerSidebar": "../assets/installer/installer-sidebar.bmp",
+      "uninstallDisplayName": "NellyDownloader",
+      "deleteAppDataOnUninstall": false,
+      "runAfterFinish": true
     }
   },
   "devDependencies": {

@@ -168,7 +168,8 @@ Begruendung:
 
 - electron-builder integriert Vite-Renderer und Electron-Main ohne eigene Installer-Pipeline
 - NSIS erzeugt einen normalen Windows-Installer mit Startmenue- und Desktop-Verknuepfung
-- App-Icon und Installer-Icon koennen aus den vorhandenen Assets verwendet werden
+- App-Icon, Installer-Icon, Header und Sidebar werden aus den vorhandenen Assets verwendet
 - Build-Artefakte landen in `src/release/` und werden nicht committed
 - Windows-Tools werden aus `reference/Windows` als `extraResources` unter `resources/tools/win/` mitgeliefert
 - im Dev-Modus bleibt die Suche ueber gespeicherte Pfade, `reference/Windows` und `PATH` erhalten
+- der NSIS-Uninstaller entfernt Programmdateien, loescht aber lokale Benutzereinstellungen nicht automatisch
