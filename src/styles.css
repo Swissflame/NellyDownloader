@@ -147,10 +147,15 @@ input:focus-visible {
 }
 
 .topnav,
-.file-actions {
+.file-actions,
+.target-heading-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.7rem;
+}
+
+.target-heading-actions {
+  justify-content: flex-end;
 }
 
 .link-panel {
@@ -824,6 +829,7 @@ select {
 
   .file-actions button,
   .settings-actions button,
+  .target-heading-actions button,
   .topnav button {
     flex: 1 1 auto;
   }

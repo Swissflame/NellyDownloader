@@ -15,13 +15,17 @@ export function renderTargetFolder(folderState: TargetFolderState, targetFolder:
           <p class="eyebrow">Zielordner</p>
           <h2 id="target-heading">Zielordner-Inhalt</h2>
         </div>
-        <button class="ghost-button" type="button" data-action="refresh">Aktualisieren</button>
+        <div class="target-heading-actions">
+          <button class="ghost-button" type="button" data-action="open-target-folder">Zielordner oeffnen</button>
+          <button class="ghost-button" type="button" data-action="refresh">Aktualisieren</button>
+        </div>
       </div>
       <div class="folder-path">${escapeHtml(targetFolder)}</div>
       <div class="${fileListClass}" role="list" aria-label="Dateien im Zielordner">
         ${fileContent}
       </div>
       <div class="file-actions">
+        <button class="secondary-button" type="button" data-action="reveal-file">Im Explorer anzeigen</button>
         <button class="secondary-button" type="button" data-action="copy">Ausgewählte kopieren</button>
         <button class="danger-button" type="button" data-action="delete">Ausgewählte löschen</button>
       </div>

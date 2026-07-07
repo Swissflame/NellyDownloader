@@ -7,6 +7,7 @@ import { DEFAULT_KEYBOARD_SHORTCUTS } from "../config/shortcuts";
 import type { AppSettings, DownloadProgressEvent, OutputFile, TargetFolderState } from "../types/app";
 import { getAssetPath } from "./assetPaths";
 import { copyTargetFilesToClipboard } from "./fileClipboard";
+import { openTargetFolderInExplorer, revealTargetFileInExplorer } from "./fileExplorer";
 import { moveTargetFilesToTrash } from "./fileTrash";
 import { analyzeLinkWithYtDlp } from "./ytDlpAnalysis";
 import { downloadLinkWithYtDlp } from "./ytDlpDownload";
@@ -28,6 +29,7 @@ const smokeTestClipboardDownload = process.env.NELLY_ELECTRON_TEST_CLIPBOARD_DOW
 const smokeTestClipboardText = process.env.NELLY_ELECTRON_TEST_CLIPBOARD_TEXT;
 const smokeTestAbout = process.env.NELLY_ELECTRON_TEST_ABOUT === "1";
 const smokeTestShortcuts = process.env.NELLY_ELECTRON_TEST_SHORTCUTS === "1";
+const smokeTestExplorer = process.env.NELLY_ELECTRON_TEST_EXPLORER === "1";
 const smokeTestVisualAssets = process.env.NELLY_ELECTRON_TEST_VISUAL_ASSETS === "1";
 const smokeTestEmptyState = process.env.NELLY_ELECTRON_TEST_EMPTY_STATE === "1";
 const supportedExtensions = new Set(["mp4", "mkv", "webm", "mov", "avi", "mp3", "m4a", "wav", "opus"]);
@@ -191,6 +193,7 @@ async function runSmokeTest(): Promise<void> {
         let helpReady = true;
         let aboutReady = true;
         let shortcutsReady = true;
+        let explorerReady = true;
         let visualAssetsReady = true;
         let clipboardDownloadReady = true;
         if (${JSON.stringify(smokeTestSettings)}) {
@@ -540,6 +543,89 @@ async function runSmokeTest(): Promise<void> {
             && ctrlEnterReady
             && clipboardShortcutReady;
         }
+        if (${JSON.stringify(smokeTestExplorer)}) {
+          document.querySelector('[data-action="close-help"]')?.click();
+          document.querySelector('[data-action="close-settings"]')?.click();
+          document.querySelector('[data-action="close-about"]')?.click();
+          await new Promise((resolve) => setTimeout(resolve, 150));
+
+          const openResult = await window.nelly.openTargetFolder();
+          const refreshedFolder = await window.nelly.listTargetFolder();
+          const ids = refreshedFolder.files.slice(0, 2).map((file) => file.id);
+          document.querySelector('[data-action="refresh"]')?.click();
+          for (let attempt = 0; attempt < 60; attempt += 1) {
+            if (document.querySelectorAll('[data-file-id]').length >= Math.min(ids.length, 2)) break;
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
+
+          document.querySelector('[data-action="reveal-file"]')?.click();
+          await new Promise((resolve) => setTimeout(resolve, 150));
+          const noSelectionToast = document.querySelector('[data-toast]')?.textContent ?? '';
+
+          const checkboxes = Array.from(document.querySelectorAll('[data-file-id]'));
+          checkboxes.slice(0, 2).forEach((checkbox) => {
+            if (checkbox instanceof HTMLInputElement && !checkbox.checked) checkbox.click();
+          });
+          document.querySelector('[data-action="reveal-file"]')?.click();
+          await new Promise((resolve) => setTimeout(resolve, 150));
+          const multipleSelectionToast = document.querySelector('[data-toast]')?.textContent ?? '';
+          checkboxes.forEach((checkbox) => {
+            if (checkbox instanceof HTMLInputElement && checkbox.checked) checkbox.click();
+          });
+
+          document.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'o',
+            ctrlKey: true,
+            bubbles: true,
+            cancelable: true
+          }));
+          await new Promise((resolve) => setTimeout(resolve, 150));
+          const openShortcutToast = document.querySelector('[data-toast]')?.textContent ?? '';
+
+          const firstCheckbox = document.querySelector('[data-file-id]');
+          if (firstCheckbox instanceof HTMLInputElement && !firstCheckbox.checked) firstCheckbox.click();
+          document.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'O',
+            ctrlKey: true,
+            shiftKey: true,
+            bubbles: true,
+            cancelable: true
+          }));
+          await new Promise((resolve) => setTimeout(resolve, 150));
+          const revealShortcutToast = document.querySelector('[data-toast]')?.textContent ?? '';
+          if (firstCheckbox instanceof HTMLInputElement && firstCheckbox.checked) firstCheckbox.click();
+
+          const revealResult = ids.length > 0
+            ? await window.nelly.revealSelectedFile(ids[0])
+            : { revealed: false };
+          const originalSettings = await window.nelly.getSettings();
+          await window.nelly.saveSettings({ ...originalSettings, targetFolder: originalSettings.targetFolder + '__fehlt__' });
+          let missingFolderReady = false;
+          try {
+            await window.nelly.openTargetFolder();
+          } catch (error) {
+            missingFolderReady = error instanceof Error && error.message.includes('existiert nicht');
+          }
+          await window.nelly.saveSettings(originalSettings);
+
+          explorerReady = openResult.opened === true
+            && noSelectionToast.includes('Bitte zuerst eine Datei')
+            && multipleSelectionToast.includes('Bitte nur eine Datei')
+            && openShortcutToast.includes('Zielordner')
+            && revealShortcutToast.includes('Explorer')
+            && revealResult.revealed === true
+            && missingFolderReady;
+          window.__explorerSmokeDetails = {
+            openResult,
+            fileIds: ids,
+            noSelectionToast,
+            multipleSelectionToast,
+            openShortcutToast,
+            revealShortcutToast,
+            revealResult,
+            missingFolderReady
+          };
+        }
         if (${JSON.stringify(smokeTestClipboardDownload)}) {
           document.querySelector('[data-action="close-help"]')?.click();
           await new Promise((resolve) => setTimeout(resolve, 150));
@@ -580,6 +666,7 @@ async function runSmokeTest(): Promise<void> {
           && helpReady
           && aboutReady
           && shortcutsReady
+          && explorerReady
           && visualAssetsReady
           && clipboardDownloadReady;
       })()
@@ -624,6 +711,8 @@ async function runSmokeTest(): Promise<void> {
           pageClientHeight: document.documentElement.clientHeight,
           visualSmokeDetails: window.__visualSmokeDetails ?? null,
           shortcutSmokeDetails: window.__shortcutSmokeDetails ?? null,
+          explorerSmokeActive: ${JSON.stringify(smokeTestExplorer)},
+          explorerSmokeDetails: window.__explorerSmokeDetails ?? null,
           helpText: document.querySelector('[data-help-panel]')?.textContent?.slice(0, 200) ?? '',
           hasHelpSearch: Boolean(document.querySelector('[data-help-search]')),
           settingsPanel: Boolean(document.querySelector('[data-settings-panel]')),
@@ -772,6 +861,16 @@ function registerIpc(): void {
   });
 
   ipcMain.handle("folder:list-target", () => listTargetFolder());
+
+  ipcMain.handle("folder:open-target", async () => {
+    const settings = await readSettings();
+    return openTargetFolderInExplorer(settings.targetFolder);
+  });
+
+  ipcMain.handle("files:reveal-selected", async (_event, fileId: string) => {
+    const settings = await readSettings();
+    return revealTargetFileInExplorer(fileId, settings.targetFolder);
+  });
 
   ipcMain.handle("files:copy-selected", async (_event, fileIds: string[]) => {
     const settings = await readSettings();

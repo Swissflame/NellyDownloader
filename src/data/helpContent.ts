@@ -43,6 +43,17 @@ export const helpChapters: HelpChapter[] = [
     keywords: ["zielordner", "ordner", "dateiliste"],
   },
   {
+    id: "target-folder-explorer",
+    title: "Zielordner und Explorer",
+    body: [
+      "Zielordner oeffnen zeigt den aktuell eingestellten Zielordner im Windows Explorer.",
+      "Im Explorer anzeigen funktioniert fuer genau eine ausgewaehlte Datei und markiert diese Datei im Zielordner.",
+      "Wenn keine oder mehrere Dateien ausgewaehlt sind, zeigt NellyDownloader einen kurzen Hinweis.",
+      "Als Viber-Workaround kannst du die Datei aus dem Explorer per Drag & Drop in den Chat ziehen.",
+    ],
+    keywords: ["zielordner", "explorer", "anzeigen", "oeffnen", "viber", "drag drop"],
+  },
+  {
     id: "analyze-link",
     title: "Link analysieren",
     body: [

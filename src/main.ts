@@ -115,6 +115,11 @@ document.addEventListener("click", (event) => {
 document.addEventListener("change", (event) => {
   const target = event.target;
 
+  if (target instanceof HTMLInputElement && target.dataset.fileId) {
+    updateTargetFileSelection(target.dataset.fileId, target.checked);
+    return;
+  }
+
   if (!(target instanceof HTMLSelectElement)) {
     return;
   }
@@ -232,6 +237,12 @@ async function handleAction(action: string): Promise<void> {
     case "refresh":
       await refreshTargetFolder();
       return;
+    case "open-target-folder":
+      await openTargetFolder();
+      return;
+    case "reveal-file":
+      await revealSelectedFile();
+      return;
     case "copy":
       await showFileActionPlaceholder("copy");
       return;
@@ -297,6 +308,18 @@ async function handleKeyboardShortcut(event: KeyboardEvent): Promise<void> {
   if (shortcut === shortcuts.refreshTargetFolder) {
     event.preventDefault();
     await refreshTargetFolder();
+    return;
+  }
+
+  if (shortcut === shortcuts.openTargetFolder) {
+    event.preventDefault();
+    await openTargetFolder();
+    return;
+  }
+
+  if (shortcut === shortcuts.revealSelectedFile) {
+    event.preventDefault();
+    await revealSelectedFile();
     return;
   }
 
@@ -438,6 +461,26 @@ function selectAllTargetFiles(): void {
   for (const checkbox of checkboxes) {
     checkbox.checked = true;
   }
+
+  state = {
+    ...state,
+    targetFolder: {
+      ...state.targetFolder,
+      files: state.targetFolder.files.map((file) => ({ ...file, selected: true })),
+    },
+  };
+}
+
+function updateTargetFileSelection(fileId: string, selected: boolean): void {
+  state = {
+    ...state,
+    targetFolder: {
+      ...state.targetFolder,
+      files: state.targetFolder.files.map((file) => (
+        file.id === fileId ? { ...file, selected } : file
+      )),
+    },
+  };
 }
 
 function getCurrentLinkInputValue(): string {
@@ -525,6 +568,36 @@ async function showFileActionPlaceholder(action: "copy" | "delete"): Promise<voi
   }
 }
 
+async function openTargetFolder(): Promise<void> {
+  try {
+    const result = await localApi.openTargetFolder();
+    showToast(result.message);
+  } catch (error) {
+    showToast(error instanceof Error ? error.message : "Der Zielordner konnte nicht geoeffnet werden.");
+  }
+}
+
+async function revealSelectedFile(): Promise<void> {
+  const selectedFileIds = getSelectedFileIds();
+
+  if (selectedFileIds.length === 0) {
+    showToast("Bitte zuerst eine Datei auswaehlen.");
+    return;
+  }
+
+  if (selectedFileIds.length > 1) {
+    showToast("Bitte nur eine Datei auswaehlen, um sie im Explorer anzuzeigen.");
+    return;
+  }
+
+  try {
+    const result = await localApi.revealSelectedFile(selectedFileIds[0]);
+    showToast(result.message);
+  } catch (error) {
+    showToast(error instanceof Error ? error.message : "Die Datei konnte nicht im Explorer angezeigt werden.");
+  }
+}
+
 async function confirmAndTrashSelectedFiles(selectedFileIds: string[]): Promise<void> {
   if (selectedFileIds.length === 0) {
     showToast("Bitte zuerst mindestens eine Datei auswählen.");
@@ -577,9 +650,17 @@ function showToast(message: string): void {
 }
 
 function getSelectedFileIds(): string[] {
-  return Array.from(document.querySelectorAll<HTMLInputElement>("[data-file-id]:checked"))
+  const domSelectedIds = Array.from(document.querySelectorAll<HTMLInputElement>("[data-file-id]:checked"))
     .map((checkbox) => checkbox.dataset.fileId)
     .filter((fileId): fileId is string => typeof fileId === "string");
+
+  if (domSelectedIds.length > 0) {
+    return domSelectedIds;
+  }
+
+  return state.targetFolder.files
+    .filter((file) => file.selected)
+    .map((file) => file.id);
 }
 
 document.addEventListener("nelly:placeholder-action", (event) => {
@@ -918,6 +999,15 @@ function createFallbackApi(): ElectronApi {
       message: "Die native Ordnerauswahl ist nur in der Electron-App verfügbar.",
     }),
     listTargetFolder: async () => emptyFolder,
+    openTargetFolder: async () => ({
+      opened: false,
+      message: "Der Zielordner kann nur in der Electron-App geoeffnet werden.",
+    }),
+    revealSelectedFile: async (fileId) => ({
+      revealed: false,
+      fileIds: [fileId],
+      message: "Dateien koennen nur in der Electron-App im Explorer angezeigt werden.",
+    }),
     copySelectedFiles: async (fileIds) => ({
       copied: false,
       fileIds,

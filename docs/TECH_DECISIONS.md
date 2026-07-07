@@ -126,6 +126,15 @@ Begruendung:
 - `shell.trashItem` verschiebt in den Papierkorb statt permanent zu loeschen
 - Teilfehler werden gemeldet, betroffene Dateien bleiben erhalten
 
+## Entscheidung 11a: Explorer-Komfortfunktionen nur ueber Main-Prozess
+
+Begruendung:
+
+- Zielordner oeffnen und Datei anzeigen sind reine Komfortfunktionen ohne Dateiaenderung
+- der Renderer sendet weiterhin keine freien Dateipfade
+- der Main-Prozess validiert Zielordner und ausgewaehlte Datei
+- `shell.openPath` und `shell.showItemInFolder` nutzen native Windows-Funktionen
+
 ## Entscheidung 12: Windows-Version als funktionale Referenz
 
 Begruendung:

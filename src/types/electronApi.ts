@@ -18,10 +18,16 @@ export type SelectTargetFolderResult = PlaceholderResult & {
 export type FileActionResult = PlaceholderResult & {
   copied?: boolean;
   deleted?: boolean;
+  opened?: boolean;
+  revealed?: boolean;
   fileIds: string[];
   mode?: "files" | "paths";
   movedCount?: number;
   failedCount?: number;
+};
+
+export type OpenTargetFolderResult = PlaceholderResult & {
+  opened: boolean;
 };
 
 export type StartDownloadResult = PlaceholderResult & {
@@ -41,6 +47,8 @@ export type ElectronApi = {
   saveSettings: (settings: AppSettings) => Promise<SaveSettingsResult>;
   selectTargetFolder: () => Promise<SelectTargetFolderResult>;
   listTargetFolder: () => Promise<TargetFolderState>;
+  openTargetFolder: () => Promise<OpenTargetFolderResult>;
+  revealSelectedFile: (fileId: string) => Promise<FileActionResult>;
   copySelectedFiles: (fileIds: string[]) => Promise<FileActionResult>;
   deleteSelectedFiles: (fileIds: string[]) => Promise<FileActionResult>;
   analyzeLink: (url: string) => Promise<AnalyzeLinkResult>;

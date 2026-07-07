@@ -45,6 +45,8 @@ export type ShortcutAction =
   | "startDownload"
   | "downloadFromClipboard"
   | "refreshTargetFolder"
+  | "openTargetFolder"
+  | "revealSelectedFile"
   | "openSettings"
   | "openHelp"
   | "openAbout"

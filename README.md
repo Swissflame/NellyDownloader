@@ -9,6 +9,7 @@ NellyDownloader ist eine lokale Electron-App zum Analysieren, Herunterladen und 
 - Link-Analyse fuer einzelne http- und https-URLs
 - Einzel-Download mit yt-dlp, ohne Playlists
 - Zielordner-Auswahl und echte Zielordner-Dateiliste
+- Zielordner im Explorer oeffnen und einzelne Datei im Explorer anzeigen
 - separat scrollbare Dateiliste fuer grosse Zielordner
 - NellyDownloader-Branding mit dezentem Hintergrund, kompaktem Kopfbereich und Empty-State
 - Downloadmodus: automatisch, erst analysieren, direkt herunterladen
