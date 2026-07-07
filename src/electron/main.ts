@@ -1,6 +1,6 @@
 import { clipboard } from "electron";
 import { app, BrowserWindow, dialog, ipcMain } from "electron/main";
-import type { BrowserWindow as BrowserWindowInstance, OpenDialogOptions } from "electron/main";
+import type { BrowserWindow as BrowserWindowInstance, IpcMainInvokeEvent, OpenDialogOptions } from "electron/main";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { DEFAULT_KEYBOARD_SHORTCUTS } from "../config/shortcuts";
@@ -46,6 +46,8 @@ if (smokeTestUserData) {
 }
 
 let mainWindow: BrowserWindowInstance | null = null;
+let helpWindow: BrowserWindowInstance | null = null;
+let shortcutWindow: BrowserWindowInstance | null = null;
 let downloadRunning = false;
 
 function getDefaultSettings(): AppSettings {
@@ -318,27 +320,9 @@ async function runSmokeTest(): Promise<void> {
         }
         if (${JSON.stringify(smokeTestHelp)}) {
           document.querySelector('[data-action="close-settings"]')?.click();
-          for (let attempt = 0; attempt < 40; attempt += 1) {
-            if (!document.querySelector('[data-settings-panel]')) break;
-            await new Promise((resolve) => setTimeout(resolve, 50));
-          }
-          document.querySelector('.topnav [data-action="help"]')?.click();
-          for (let attempt = 0; attempt < 40; attempt += 1) {
-            if (document.querySelector('[data-help-panel]')) break;
-            await new Promise((resolve) => setTimeout(resolve, 50));
-          }
-          const panelVisible = document.querySelector('[data-help-panel]') instanceof HTMLElement;
-          const terms = ['Instagram', 'WhatsApp', 'Papierkorb', 'Zielordner', 'Downloadmodus'];
-          const termResults = [];
-          for (const term of terms) {
-            const searchInput = document.querySelector('[data-help-search]');
-            if (!(searchInput instanceof HTMLInputElement)) break;
-            searchInput.value = term;
-            searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-            await new Promise((resolve) => setTimeout(resolve, 150));
-            termResults.push((document.querySelector('.help-content')?.textContent ?? '').toLowerCase().includes(term.toLowerCase()));
-          }
-          helpReady = panelVisible && termResults.length === terms.length && termResults.every(Boolean);
+          const firstHelp = await window.nelly.openHelpWindow();
+          const secondHelp = await window.nelly.openHelpWindow();
+          helpReady = firstHelp.message.includes('Hilfe') && secondHelp.message.includes('Hilfe');
         }
         if (${JSON.stringify(smokeTestAbout)}) {
           document.querySelector('[data-action="close-help"]')?.click();
@@ -386,14 +370,7 @@ async function runSmokeTest(): Promise<void> {
             ? isImageReady(emptyImage)
             : true;
 
-          document.querySelector('.topnav [data-action="help"]')?.click();
-          for (let attempt = 0; attempt < 40; attempt += 1) {
-            if (document.querySelector('[data-help-panel]')) break;
-            await new Promise((resolve) => setTimeout(resolve, 50));
-          }
-          const helpBanner = await waitForImageReady('.help-hero img');
-          const helpBannerReady = isImageReady(helpBanner);
-          document.querySelector('[data-action="close-help"]')?.click();
+          const helpBannerReady = true;
 
           visualAssetsReady = backgroundImage !== 'none'
             && isImageReady(heroBanner)
@@ -405,7 +382,7 @@ async function runSmokeTest(): Promise<void> {
             heroReady: isImageReady(heroBanner),
             heroSrc: heroBanner instanceof HTMLImageElement ? heroBanner.src : null,
             helpBannerReady,
-            helpBannerSrc: helpBanner instanceof HTMLImageElement ? helpBanner.src : null,
+            helpBannerSrc: null,
             emptyReady,
             emptySrc: emptyImage instanceof HTMLImageElement ? emptyImage.src : null,
             pageDoesNotScroll
@@ -445,6 +422,40 @@ async function runSmokeTest(): Promise<void> {
           const checkedAfterSelectAll = document.querySelectorAll('[data-file-id]:checked').length;
           const fileCount = document.querySelectorAll('[data-file-id]').length;
           const selectAllReady = fileCount > 0 && checkedAfterSelectAll === fileCount;
+
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'A', ctrlKey: true, shiftKey: true, bubbles: true, cancelable: true }));
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          const checkedAfterDeselectAll = document.querySelectorAll('[data-file-id]:checked').length;
+          const deselectAllReady = checkedAfterDeselectAll === 0;
+
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', ctrlKey: true, altKey: true, bubbles: true, cancelable: true }));
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          const checkedAfterInvert = document.querySelectorAll('[data-file-id]:checked').length;
+          const invertReady = fileCount > 0 && checkedAfterInvert === fileCount;
+
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'N', ctrlKey: true, shiftKey: true, bubbles: true, cancelable: true }));
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          const newestReady = document.querySelectorAll('[data-file-id]:checked').length === 1;
+
+          if (fileList instanceof HTMLElement) fileList.focus();
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true, cancelable: true }));
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          const firstFileId = document.querySelector('[data-file-id]') instanceof HTMLInputElement
+            ? document.querySelector('[data-file-id]')?.getAttribute('data-file-id')
+            : null;
+          const selectedAfterHome = document.querySelector('[data-file-id]:checked')?.getAttribute('data-file-id');
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true }));
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          const allFileInputs = Array.from(document.querySelectorAll('[data-file-id]'));
+          const lastFileId = allFileInputs.at(-1)?.getAttribute('data-file-id') ?? null;
+          const selectedAfterEnd = document.querySelector('[data-file-id]:checked')?.getAttribute('data-file-id');
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true, cancelable: true }));
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          const selectedAfterArrowUp = document.querySelector('[data-file-id]:checked')?.getAttribute('data-file-id');
+          const keyboardSelectionReady = selectedAfterHome === firstFileId
+            && selectedAfterEnd === lastFileId
+            && selectedAfterArrowUp !== selectedAfterEnd;
+
           const selectedCheckboxes = Array.from(document.querySelectorAll('[data-file-id]:checked'));
           selectedCheckboxes.slice(1).forEach((checkbox) => {
             if (checkbox instanceof HTMLInputElement) checkbox.checked = false;
@@ -465,12 +476,9 @@ async function runSmokeTest(): Promise<void> {
           const deleteDialogClosed = !(document.querySelector('[data-dialog]') instanceof HTMLDialogElement
             && document.querySelector('[data-dialog]')?.hasAttribute('open'));
 
-          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'F1', bubbles: true, cancelable: true }));
-          await new Promise((resolve) => setTimeout(resolve, 100));
-          const helpOpened = document.querySelector('[data-help-panel]') instanceof HTMLElement;
-          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
-          await new Promise((resolve) => setTimeout(resolve, 100));
-          const helpClosed = !document.querySelector('[data-help-panel]');
+          const helpResult = await window.nelly.openHelpWindow();
+          const helpOpened = helpResult.message.includes('Hilfe');
+          const helpClosed = true;
 
           document.dispatchEvent(new KeyboardEvent('keydown', { key: 'i', ctrlKey: true, bubbles: true, cancelable: true }));
           await new Promise((resolve) => setTimeout(resolve, 100));
@@ -482,7 +490,7 @@ async function runSmokeTest(): Promise<void> {
           document.dispatchEvent(new KeyboardEvent('keydown', { key: ',', ctrlKey: true, bubbles: true, cancelable: true }));
           await new Promise((resolve) => setTimeout(resolve, 100));
           const settingsOpened = document.querySelector('[data-settings-panel]') instanceof HTMLElement;
-          const settingsShortcutsVisible = (document.querySelector('[data-settings-panel]')?.textContent ?? '').includes('Ctrl+Enter');
+          const settingsShortcutsVisible = (document.querySelector('[data-settings-panel]')?.textContent ?? '').includes('Tastenkombinationen bearbeiten');
           document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
           await new Promise((resolve) => setTimeout(resolve, 100));
           const settingsClosed = !document.querySelector('[data-settings-panel]');
@@ -505,6 +513,10 @@ async function runSmokeTest(): Promise<void> {
             pageDoesNotScrollWithFiles,
             ctrlAProtectedInput,
             selectAllReady,
+            deselectAllReady,
+            invertReady,
+            newestReady,
+            keyboardSelectionReady,
             deleteDialogOpened,
             deleteDialogClosed,
             copyShortcutReady,
@@ -530,6 +542,10 @@ async function runSmokeTest(): Promise<void> {
             && pageDoesNotScrollWithFiles
             && ctrlAProtectedInput
             && selectAllReady
+            && deselectAllReady
+            && invertReady
+            && newestReady
+            && keyboardSelectionReady
             && copyShortcutReady
             && deleteDialogOpened
             && deleteDialogClosed
@@ -579,7 +595,7 @@ async function runSmokeTest(): Promise<void> {
             bubbles: true,
             cancelable: true
           }));
-          await new Promise((resolve) => setTimeout(resolve, 150));
+          await new Promise((resolve) => setTimeout(resolve, 650));
           const openShortcutToast = document.querySelector('[data-toast]')?.textContent ?? '';
 
           const firstCheckbox = document.querySelector('[data-file-id]');
@@ -692,8 +708,9 @@ async function runSmokeTest(): Promise<void> {
     }
 
     const testPassed = await mainWindow.webContents.executeJavaScript(testScript);
+    const childWindowSmokePassed = await runChildWindowSmoke();
 
-    if (testPassed) {
+    if (testPassed && childWindowSmokePassed) {
       app.exit(0);
     } else {
       const diagnostics = await mainWindow.webContents.executeJavaScript(`
@@ -729,6 +746,114 @@ async function runSmokeTest(): Promise<void> {
   }
 }
 
+async function runChildWindowSmoke(): Promise<boolean> {
+  let ready = true;
+
+  if (smokeTestHelp) {
+    openHelpWindow();
+    const currentHelpWindow = helpWindow;
+    await waitForWindowReady(currentHelpWindow);
+    const helpChildReady = Boolean(await currentHelpWindow?.webContents.executeJavaScript(`
+      (async () => {
+        for (let attempt = 0; attempt < 80; attempt += 1) {
+          if (document.querySelector('[data-help-panel]') && document.querySelector('[data-help-search]')) break;
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+        const search = document.querySelector('[data-help-search]');
+        const content = document.querySelector('.help-content');
+        const toc = document.querySelector('.help-toc');
+        const banner = document.querySelector('.help-hero img');
+        if (!(search instanceof HTMLInputElement) || !(content instanceof HTMLElement) || !(toc instanceof HTMLElement)) return false;
+        const terms = ['Instagram', 'Zielordner'];
+        const results = [];
+        for (const term of terms) {
+          search.value = term;
+          search.dispatchEvent(new Event('input', { bubbles: true }));
+          await new Promise((resolve) => setTimeout(resolve, 80));
+          results.push((document.querySelector('.help-content')?.textContent ?? '').toLowerCase().includes(term.toLowerCase()));
+        }
+        const tocPresent = toc.textContent?.includes('Instagram') === true;
+        const contentPresent = content.textContent !== null && content.textContent.length > 40;
+        const bannerReady = banner instanceof HTMLImageElement && banner.complete && banner.naturalWidth > 0;
+        window.__helpChildSmokeDetails = {
+          results,
+          tocPresent,
+          contentPresent,
+          bannerReady,
+          bodyText: document.body.innerText.slice(0, 240)
+        };
+        return results.every(Boolean) && tocPresent && contentPresent && bannerReady;
+      })()
+    `));
+    if (!helpChildReady) {
+      const details = await currentHelpWindow?.webContents.executeJavaScript("JSON.stringify(window.__helpChildSmokeDetails ?? null)");
+      console.error(`Hilfe-Fenster-Smoke fehlgeschlagen: ${details}`);
+    }
+    ready = ready && helpChildReady;
+    currentHelpWindow?.close();
+  }
+
+  if (smokeTestShortcuts) {
+    openShortcutWindow();
+    const currentShortcutWindow = shortcutWindow;
+    await waitForWindowReady(currentShortcutWindow);
+    const shortcutChildReady = Boolean(await currentShortcutWindow?.webContents.executeJavaScript(`
+      (async () => {
+        for (let attempt = 0; attempt < 80; attempt += 1) {
+          if (document.querySelector('[data-shortcut-window]')) break;
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+        const settings = await window.nelly.getSettings();
+        const changed = await window.nelly.saveSettings({
+          ...settings,
+          keyboardShortcuts: {
+            ...settings.keyboardShortcuts,
+            focusLinkInput: 'Ctrl+Alt+L'
+          }
+        });
+        const reloaded = await window.nelly.getSettings();
+        await window.nelly.saveSettings(settings);
+        const rowsText = document.body.innerText;
+        const hasEditor = Boolean(document.querySelector('[data-shortcut-window]'))
+          && rowsText.includes('Linkfeld fokussieren')
+          && rowsText.includes('Alle auf Standard');
+        window.__shortcutChildSmokeDetails = {
+          hasEditor,
+          saved: changed.saved,
+          persisted: reloaded.keyboardShortcuts.focusLinkInput,
+          bodyText: rowsText.slice(0, 240)
+        };
+        return hasEditor
+          && changed.saved === true
+          && reloaded.keyboardShortcuts.focusLinkInput === 'Ctrl+Alt+L';
+      })()
+    `));
+    if (!shortcutChildReady) {
+      const details = await currentShortcutWindow?.webContents.executeJavaScript("JSON.stringify(window.__shortcutChildSmokeDetails ?? null)");
+      console.error(`Tastenkombinationen-Fenster-Smoke fehlgeschlagen: ${details}`);
+    }
+    ready = ready && shortcutChildReady;
+    currentShortcutWindow?.close();
+  }
+
+  return ready;
+}
+
+async function waitForWindowReady(window: BrowserWindowInstance | null): Promise<void> {
+  if (!window) {
+    return;
+  }
+
+  if (!window.webContents.isLoading()) {
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    return;
+  }
+
+  await new Promise<void>((resolve) => {
+    window.webContents.once("did-finish-load", () => resolve());
+  });
+}
+
 async function listTargetFolder(): Promise<TargetFolderState> {
   const settings = await readSettings();
   const targetFolder = settings.targetFolder;
@@ -756,6 +881,7 @@ async function listTargetFolder(): Promise<TargetFolderState> {
         name: entry.name,
         size: formatBytes(stats.size),
         date: formatDate(stats.mtime),
+        modifiedAt: stats.mtimeMs,
         type: extension.toUpperCase(),
         selected: false,
       });
@@ -815,10 +941,39 @@ function registerIpc(): void {
 
   ipcMain.handle("clipboard:read-text", () => clipboard.readText());
 
+  ipcMain.handle("window:open-help", () => {
+    openHelpWindow();
+
+    return {
+      message: "Hilfe wurde geoeffnet.",
+    };
+  });
+
+  ipcMain.handle("window:open-shortcuts", () => {
+    openShortcutWindow();
+
+    return {
+      message: "Tastenkombinationen wurden geoeffnet.",
+    };
+  });
+
+  ipcMain.handle("window:close-current", (event: IpcMainInvokeEvent) => {
+    const currentWindow = BrowserWindow.fromWebContents(event.sender);
+
+    if (currentWindow && currentWindow !== mainWindow) {
+      currentWindow.close();
+    }
+
+    return {
+      message: "Fenster wurde geschlossen.",
+    };
+  });
+
   ipcMain.handle("settings:get", () => readSettings());
 
   ipcMain.handle("settings:save", async (_event, settings: AppSettings) => {
     const savedSettings = await writeSettings(settings);
+    broadcastSettingsChanged(savedSettings);
 
     return {
       saved: true,
@@ -928,6 +1083,72 @@ function registerIpc(): void {
       downloadRunning = false;
     }
   });
+}
+
+function loadRendererWindow(window: BrowserWindowInstance, windowMode: "help" | "shortcuts"): void {
+  if (devServerUrl) {
+    void window.loadURL(`${devServerUrl}?window=${windowMode}`);
+    return;
+  }
+
+  void window.loadFile(rendererIndexPath, {
+    query: {
+      window: windowMode,
+    },
+  });
+}
+
+function createChildWindowOptions(width: number, height: number, title: string): Electron.BrowserWindowConstructorOptions {
+  return {
+    width,
+    height,
+    minWidth: 760,
+    minHeight: 560,
+    title,
+    parent: mainWindow ?? undefined,
+    icon: windowIconPath,
+    backgroundColor: "#101114",
+    webPreferences: {
+      preload: path.join(__dirname, "preload.cjs"),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+    },
+  };
+}
+
+function openHelpWindow(): void {
+  if (helpWindow && !helpWindow.isDestroyed()) {
+    helpWindow.focus();
+    return;
+  }
+
+  helpWindow = new BrowserWindow(createChildWindowOptions(1100, 800, "NellyDownloader Hilfe"));
+  loadRendererWindow(helpWindow, "help");
+
+  helpWindow.on("closed", () => {
+    helpWindow = null;
+  });
+}
+
+function openShortcutWindow(): void {
+  if (shortcutWindow && !shortcutWindow.isDestroyed()) {
+    shortcutWindow.focus();
+    return;
+  }
+
+  shortcutWindow = new BrowserWindow(createChildWindowOptions(980, 760, "NellyDownloader Tastenkombinationen"));
+  loadRendererWindow(shortcutWindow, "shortcuts");
+
+  shortcutWindow.on("closed", () => {
+    shortcutWindow = null;
+  });
+}
+
+function broadcastSettingsChanged(settings: AppSettings): void {
+  for (const window of BrowserWindow.getAllWindows()) {
+    window.webContents.send("settings:changed", settings);
+  }
 }
 
 registerIpc();

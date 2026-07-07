@@ -423,6 +423,27 @@ kbd {
   font: 700 0.82rem ui-monospace, "SFMono-Regular", Consolas, monospace;
 }
 
+.standalone-body {
+  overflow: hidden;
+}
+
+.standalone-window {
+  width: min(100vw, 100%);
+  height: 100vh;
+  padding: 1rem;
+  overflow: hidden;
+}
+
+.help-window-panel,
+.shortcut-window-panel {
+  width: min(100%, 72rem);
+  height: calc(100vh - 2rem);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .help-panel {
   width: min(66rem, calc(100vw - 2rem));
   max-height: min(44rem, calc(100vh - 2rem));
@@ -470,12 +491,17 @@ kbd {
   grid-template-columns: minmax(11rem, 0.35fr) minmax(0, 1fr);
   gap: 1.25rem;
   margin-top: 1rem;
+  min-height: 0;
 }
 
 .help-toc {
   display: grid;
   align-content: start;
   gap: 0.35rem;
+  position: sticky;
+  top: 0;
+  max-height: 100%;
+  overflow: auto;
 }
 
 .help-toc a {
@@ -492,6 +518,23 @@ kbd {
 .help-content {
   display: grid;
   gap: 1rem;
+  min-height: 0;
+}
+
+.help-window-panel .help-layout {
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.help-window-panel .help-content {
+  overflow: auto;
+  padding-right: 0.35rem;
+}
+
+.help-window-panel .help-search {
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .help-chapter {
@@ -527,6 +570,60 @@ kbd {
 
 .help-table strong {
   color: #f4f7fb;
+}
+
+.shortcut-window-panel .settings-actions {
+  margin-top: 1rem;
+}
+
+.shortcut-editor-list {
+  display: grid;
+  gap: 0.55rem;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 0.35rem;
+}
+
+.shortcut-editor-row {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) minmax(8rem, auto) minmax(9rem, auto) minmax(18rem, auto);
+  gap: 0.75rem;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 0.7rem;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.shortcut-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.shortcut-default {
+  color: #aab3c2;
+  font-size: 0.88rem;
+}
+
+.capture-box,
+.inline-message {
+  border-radius: 8px;
+  padding: 0.8rem 0.9rem;
+  margin: 0.8rem 0;
+}
+
+.capture-box {
+  display: grid;
+  gap: 0.25rem;
+  border: 1px solid rgba(94, 234, 212, 0.34);
+  background: rgba(20, 184, 166, 0.13);
+}
+
+.inline-message {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 mark {
@@ -603,6 +700,11 @@ mark {
   scrollbar-gutter: stable;
 }
 
+.file-list:focus-visible {
+  outline: 2px solid rgba(94, 234, 212, 0.75);
+  outline-offset: 2px;
+}
+
 .file-list-empty {
   min-height: 12rem;
   overflow: auto;
@@ -646,6 +748,15 @@ mark {
   min-height: 3.2rem;
   padding: 0.7rem 0.85rem;
   background: rgba(255, 255, 255, 0.03);
+}
+
+.file-row-selected {
+  background: rgba(47, 128, 237, 0.18);
+  box-shadow: inset 3px 0 0 #5eead4;
+}
+
+.file-row:hover {
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .file-row + .file-row {
@@ -817,6 +928,14 @@ select {
 
   .shortcut-list div {
     grid-template-columns: 1fr;
+  }
+
+  .shortcut-editor-row {
+    grid-template-columns: 1fr;
+  }
+
+  .shortcut-row-actions {
+    justify-content: flex-start;
   }
 
   kbd {

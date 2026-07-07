@@ -152,15 +152,18 @@ Begruendung:
 - der Electron Main-Prozess nutzt eine Asset-Pfad-Hilfe mit `process.resourcesPath` fuer packaged Builds
 - Installer-Assets sind vorbereitet; App- und Installer-Icons sind im Build eingebunden
 
-## Entscheidung 14: Shortcuts im Renderer statt neue Logik
+## Entscheidung 14: Konfigurierbare Shortcuts im Renderer statt neue Logik
 
 Begruendung:
 
 - Tastenkombinationen sollen exakt bestehende Button- und Rechtsklick-Aktionen ausloesen
 - Download-, yt-dlp-, ffmpeg- und Dateioperationslogik bleiben unveraendert
 - Texteingaben werden geschuetzt, damit Ctrl+A und Delete in Feldern nicht zweckentfremdet werden
-- die Belegung wird in `AppSettings` vorbereitet und in den Einstellungen angezeigt
+- die Belegung wird in `AppSettings` gespeichert und ueber ein eigenes Tastenkombinationen-Fenster bearbeitet
+- Konflikte werden erkannt und nicht still ueberschrieben
+- ungueltige Kombinationen wie einzelne Buchstaben ohne Ctrl oder Alt werden abgelehnt
 - externe Bediengeraete koennen auf die Shortcuts gelegt werden, ohne eigene Integrationslogik
+- es werden keine globalen Windows-Hotkeys registriert
 
 ## Entscheidung 15: Separate Scrollflaeche fuer die Dateiliste
 
@@ -170,6 +173,25 @@ Begruendung:
 - Link-, Analyse- und Fortschrittsbereiche bleiben leichter sichtbar
 - Kopieren- und Papierkorb-Buttons bleiben unter der Liste erreichbar
 - die Aenderung betrifft nur Layout/CSS und keine Dateioperationen
+
+## Entscheidung 15a: Dateiauswahl ueber denselben Renderer-State
+
+Begruendung:
+
+- Checkbox-Auswahl und Tastaturauswahl muessen identisch fuer Kopieren, Papierkorb und Explorer-Funktionen wirken
+- neue Auswahlaktionen wie Abwaehlen, Invertieren, neueste Datei und Bewegung bleiben reine UI-State-Aenderungen
+- Dateioperationen im Main-Prozess werden nicht veraendert
+- die Dateiliste kann Fokus erhalten, damit Home, End, ArrowUp und ArrowDown nicht in Textfeldern wirken
+
+## Entscheidung 15b: Hilfe und Shortcut-Bearbeitung als eigene Electron-Fenster
+
+Begruendung:
+
+- das Hilfe-Handbuch ist laenger geworden und ist als eigenes Fenster besser lesbar
+- das Hauptfenster bleibt im Hintergrund erhalten
+- erneutes Oeffnen fokussiert vorhandene Fenster statt mehrere Instanzen zu stapeln
+- Renderer, Main und Preload bleiben getrennt; Fenster werden ueber IPC im Main-Prozess erstellt
+- Hilfe und Shortcut-Fenster verwenden dasselbe Vite-Bundle mit einem URL-Modus
 
 ## Entscheidung 16: electron-builder fuer Windows-Installer
 

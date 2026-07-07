@@ -1,8 +1,10 @@
 import { renderApp, bindApp } from "./components/app";
 import { showConfirmDialog, showDialog } from "./components/dialog";
+import { renderHelpWindow } from "./components/helpPanel";
+import { renderShortcutWindow, type ShortcutCaptureState } from "./components/shortcutWindow";
 import { DEFAULT_SETTINGS, EMPTY_LINK_DETAILS, IDLE_PROGRESS } from "./config/defaults";
 import { UI_ASSETS } from "./config/assets";
-import { DEFAULT_KEYBOARD_SHORTCUTS } from "./config/shortcuts";
+import { DEFAULT_KEYBOARD_SHORTCUTS, SHORTCUT_DESCRIPTIONS } from "./config/shortcuts";
 import { initialState } from "./data/demoState";
 import type {
   AppSettings,
@@ -10,6 +12,7 @@ import type {
   DownloadMode,
   DownloadProgressEvent,
   OriginalAfterConversionMode,
+  ShortcutAction,
   TargetFolderState,
   WhatsAppCompatibilityMode,
 } from "./types/app";
@@ -25,23 +28,61 @@ if (!app) {
 const appElement = app;
 const fallbackApi = createFallbackApi();
 const localApi = window.nelly ?? fallbackApi;
+const windowMode = new URLSearchParams(window.location.search).get("window");
 let toastTimeout: number | undefined;
 let state: AppState = {
   ...initialState,
   settings: DEFAULT_SETTINGS,
 };
+let helpWindowSearch = "";
+let shortcutWindowSettings: AppSettings = DEFAULT_SETTINGS;
+let shortcutCapture: ShortcutCaptureState = null;
+let shortcutWindowMessage: string | null = null;
 
 document.documentElement.style.setProperty("--app-background-image", `url('${UI_ASSETS.appBackground}')`);
 
-render();
-localApi.onDownloadProgress((progress) => {
-  applyDownloadProgress(progress);
-});
-void initializeApp();
+if (windowMode === "help") {
+  document.body.classList.add("standalone-body");
+  renderHelpStandalone();
+} else if (windowMode === "shortcuts") {
+  document.body.classList.add("standalone-body");
+  void initializeShortcutWindow();
+} else {
+  render();
+  localApi.onDownloadProgress((progress) => {
+    applyDownloadProgress(progress);
+  });
+  localApi.onSettingsChanged((settings) => {
+    state = {
+      ...state,
+      settings,
+    };
+    render();
+  });
+  void initializeApp();
+}
 
 function render(): void {
   appElement.innerHTML = renderApp(state);
   bindApp();
+}
+
+function renderHelpStandalone(): void {
+  appElement.innerHTML = renderHelpWindow(helpWindowSearch);
+}
+
+async function initializeShortcutWindow(): Promise<void> {
+  try {
+    shortcutWindowSettings = await localApi.getSettings();
+  } catch {
+    shortcutWindowSettings = DEFAULT_SETTINGS;
+  }
+
+  renderShortcutStandalone();
+}
+
+function renderShortcutStandalone(): void {
+  appElement.innerHTML = renderShortcutWindow(shortcutWindowSettings, shortcutCapture, shortcutWindowMessage);
 }
 
 async function initializeApp(): Promise<void> {
@@ -109,6 +150,11 @@ document.addEventListener("click", (event) => {
     return;
   }
 
+  if (windowMode === "shortcuts") {
+    void handleShortcutWindowAction(action, target);
+    return;
+  }
+
   void handleAction(action);
 });
 
@@ -166,6 +212,15 @@ document.addEventListener("input", (event) => {
     return;
   }
 
+  if (windowMode === "help" && target.matches("[data-help-search]")) {
+    helpWindowSearch = target.value;
+    renderHelpStandalone();
+    const nextSearchInput = document.querySelector<HTMLInputElement>("[data-help-search]");
+    nextSearchInput?.focus();
+    nextSearchInput?.setSelectionRange(nextSearchInput.value.length, nextSearchInput.value.length);
+    return;
+  }
+
   if (target.id === "download-link") {
     updateLinkInput(target);
     return;
@@ -215,6 +270,19 @@ function updateLinkInput(input: HTMLInputElement): void {
 }
 
 document.addEventListener("keydown", (event) => {
+  if (windowMode === "shortcuts") {
+    void handleShortcutWindowKeydown(event);
+    return;
+  }
+
+  if (windowMode === "help") {
+    if (keyboardEventToShortcut(event) === "Esc") {
+      event.preventDefault();
+      void localApi.closeCurrentWindow();
+    }
+    return;
+  }
+
   void handleKeyboardShortcut(event);
 });
 
@@ -223,6 +291,12 @@ async function handleAction(action: string): Promise<void> {
     case "settings":
       state = { ...state, settingsVisible: true };
       render();
+      return;
+    case "open-shortcuts":
+      await localApi.openShortcutWindow();
+      return;
+    case "close-window":
+      await localApi.closeCurrentWindow();
       return;
     case "close-settings":
       state = { ...state, settingsVisible: false };
@@ -250,8 +324,7 @@ async function handleAction(action: string): Promise<void> {
       await showFileActionPlaceholder("delete");
       return;
     case "help":
-      state = { ...state, helpVisible: true };
-      render();
+      await localApi.openHelpWindow();
       return;
     case "close-help":
       state = { ...state, helpVisible: false, helpSearch: "" };
@@ -271,6 +344,115 @@ async function handleAction(action: string): Promise<void> {
         text: "Diese Funktion wird später umgesetzt.",
       });
   }
+}
+
+async function handleShortcutWindowAction(action: string, target: HTMLElement): Promise<void> {
+  if (action === "close-window") {
+    await localApi.closeCurrentWindow();
+    return;
+  }
+
+  if (action === "reset-all-shortcuts") {
+    shortcutWindowSettings = {
+      ...shortcutWindowSettings,
+      keyboardShortcuts: DEFAULT_KEYBOARD_SHORTCUTS,
+    };
+    await saveShortcutWindowSettings("Alle Tastenkombinationen wurden auf Standard zurueckgesetzt.");
+    return;
+  }
+
+  const shortcutAction = target.dataset.shortcutAction;
+
+  if (!isShortcutAction(shortcutAction)) {
+    return;
+  }
+
+  const description = SHORTCUT_DESCRIPTIONS.find((item) => item.action === shortcutAction);
+
+  if (action === "capture-shortcut") {
+    shortcutCapture = {
+      action: shortcutAction,
+      label: description?.label ?? shortcutAction,
+    };
+    shortcutWindowMessage = null;
+    renderShortcutStandalone();
+    return;
+  }
+
+  if (action === "reset-shortcut") {
+    shortcutWindowSettings = {
+      ...shortcutWindowSettings,
+      keyboardShortcuts: {
+        ...shortcutWindowSettings.keyboardShortcuts,
+        [shortcutAction]: DEFAULT_KEYBOARD_SHORTCUTS[shortcutAction],
+      },
+    };
+    await saveShortcutWindowSettings("Tastenkombination wurde zurueckgesetzt.");
+    return;
+  }
+
+  if (action === "clear-shortcut") {
+    shortcutWindowSettings = {
+      ...shortcutWindowSettings,
+      keyboardShortcuts: {
+        ...shortcutWindowSettings.keyboardShortcuts,
+        [shortcutAction]: "",
+      },
+    };
+    await saveShortcutWindowSettings("Tastenkombination wurde entfernt.");
+  }
+}
+
+async function handleShortcutWindowKeydown(event: KeyboardEvent): Promise<void> {
+  const shortcut = keyboardEventToShortcut(event);
+
+  if (!shortcutCapture) {
+    if (shortcut === "Esc") {
+      event.preventDefault();
+      await localApi.closeCurrentWindow();
+    }
+    return;
+  }
+
+  event.preventDefault();
+
+  if (shortcut === "Esc") {
+    shortcutCapture = null;
+    shortcutWindowMessage = "Aufnahme abgebrochen.";
+    renderShortcutStandalone();
+    return;
+  }
+
+  if (!isValidAssignableShortcut(shortcut)) {
+    shortcutWindowMessage = "Diese Tastenkombination ist nicht geeignet. Nutze z.B. Ctrl, Alt oder eine Funktionstaste.";
+    renderShortcutStandalone();
+    return;
+  }
+
+  const conflict = findShortcutConflict(shortcut, shortcutCapture.action, shortcutWindowSettings);
+
+  if (conflict) {
+    shortcutWindowMessage = `Konflikt: ${shortcut} ist bereits fuer "${conflict}" vergeben.`;
+    renderShortcutStandalone();
+    return;
+  }
+
+  shortcutWindowSettings = {
+    ...shortcutWindowSettings,
+    keyboardShortcuts: {
+      ...shortcutWindowSettings.keyboardShortcuts,
+      [shortcutCapture.action]: shortcut,
+    },
+  };
+  shortcutCapture = null;
+  await saveShortcutWindowSettings("Tastenkombination wurde gespeichert.");
+}
+
+async function saveShortcutWindowSettings(message: string): Promise<void> {
+  const result = await localApi.saveSettings(shortcutWindowSettings);
+  shortcutWindowSettings = result.settings;
+  shortcutWindowMessage = message;
+  renderShortcutStandalone();
 }
 
 async function handleKeyboardShortcut(event: KeyboardEvent): Promise<void> {
@@ -305,6 +487,32 @@ async function handleKeyboardShortcut(event: KeyboardEvent): Promise<void> {
     return;
   }
 
+  if (shortcut === shortcuts.focusLinkInput) {
+    event.preventDefault();
+    focusLinkInput();
+    return;
+  }
+
+  if (shortcut === shortcuts.clearLinkInput) {
+    event.preventDefault();
+    clearLinkInput();
+    return;
+  }
+
+  if (shortcut === shortcuts.analyzeCurrentLink) {
+    event.preventDefault();
+    await analyzeCurrentLinkOnly();
+    return;
+  }
+
+  if (shortcut === shortcuts.openTargetFolderSettings) {
+    event.preventDefault();
+    state = { ...state, settingsVisible: true };
+    render();
+    await selectTargetFolder();
+    return;
+  }
+
   if (shortcut === shortcuts.refreshTargetFolder) {
     event.preventDefault();
     await refreshTargetFolder();
@@ -332,8 +540,7 @@ async function handleKeyboardShortcut(event: KeyboardEvent): Promise<void> {
 
   if (shortcut === shortcuts.openHelp) {
     event.preventDefault();
-    state = { ...state, helpVisible: true };
-    render();
+    await localApi.openHelpWindow();
     return;
   }
 
@@ -363,6 +570,48 @@ async function handleKeyboardShortcut(event: KeyboardEvent): Promise<void> {
   if (shortcut === shortcuts.selectAllFiles) {
     event.preventDefault();
     selectAllTargetFiles();
+    return;
+  }
+
+  if (shortcut === shortcuts.deselectAllFiles) {
+    event.preventDefault();
+    deselectAllTargetFiles();
+    return;
+  }
+
+  if (shortcut === shortcuts.invertFileSelection) {
+    event.preventDefault();
+    invertTargetFileSelection();
+    return;
+  }
+
+  if (shortcut === shortcuts.selectNewestFile) {
+    event.preventDefault();
+    selectNewestTargetFile();
+    return;
+  }
+
+  if (shortcut === shortcuts.selectFirstFile && isFileListFocused()) {
+    event.preventDefault();
+    selectTargetFileAt(0);
+    return;
+  }
+
+  if (shortcut === shortcuts.selectLastFile && isFileListFocused()) {
+    event.preventDefault();
+    selectTargetFileAt(state.targetFolder.files.length - 1);
+    return;
+  }
+
+  if (shortcut === shortcuts.moveSelectionUp && isFileListFocused()) {
+    event.preventDefault();
+    moveTargetFileSelection(-1);
+    return;
+  }
+
+  if (shortcut === shortcuts.moveSelectionDown && isFileListFocused()) {
+    event.preventDefault();
+    moveTargetFileSelection(1);
   }
 }
 
@@ -384,6 +633,62 @@ function keyboardEventToShortcut(event: KeyboardEvent): string {
   parts.push(normalizeShortcutKey(event.key));
 
   return parts.join("+");
+}
+
+function isShortcutAction(value: string | undefined): value is ShortcutAction {
+  return SHORTCUT_DESCRIPTIONS.some((shortcut) => shortcut.action === value);
+}
+
+function isValidAssignableShortcut(shortcut: string): boolean {
+  const parts = shortcut.split("+");
+  const key = parts.at(-1) ?? "";
+  const hasCtrlOrAlt = parts.includes("Ctrl") || parts.includes("Alt");
+  const standaloneKeys = new Set([
+    "Delete",
+    "Home",
+    "End",
+    "ArrowUp",
+    "ArrowDown",
+    "ArrowLeft",
+    "ArrowRight",
+    "PageUp",
+    "PageDown",
+    "F1",
+    "F2",
+    "F3",
+    "F4",
+    "F5",
+    "F6",
+    "F7",
+    "F8",
+    "F9",
+    "F10",
+    "F11",
+    "F12",
+  ]);
+
+  if (!key || key === "Esc") {
+    return false;
+  }
+
+  if (standaloneKeys.has(key)) {
+    return true;
+  }
+
+  if (/^[A-Z0-9]$/.test(key)) {
+    return hasCtrlOrAlt;
+  }
+
+  return hasCtrlOrAlt;
+}
+
+function findShortcutConflict(shortcut: string, currentAction: ShortcutAction, settings: AppSettings): string | null {
+  const conflict = SHORTCUT_DESCRIPTIONS.find((description) => (
+    description.action !== currentAction
+    && settings.keyboardShortcuts[description.action] === shortcut
+  ));
+
+  return conflict?.label ?? null;
 }
 
 function normalizeShortcutKey(key: string): string {
@@ -451,15 +756,9 @@ function closeOpenModal(): boolean {
 }
 
 function selectAllTargetFiles(): void {
-  const checkboxes = Array.from(document.querySelectorAll<HTMLInputElement>("[data-file-id]"));
-
-  if (checkboxes.length === 0) {
+  if (state.targetFolder.files.length === 0) {
     showToast("Keine Dateien im Zielordner.");
     return;
-  }
-
-  for (const checkbox of checkboxes) {
-    checkbox.checked = true;
   }
 
   state = {
@@ -469,6 +768,81 @@ function selectAllTargetFiles(): void {
       files: state.targetFolder.files.map((file) => ({ ...file, selected: true })),
     },
   };
+  render();
+  focusFileList();
+}
+
+function deselectAllTargetFiles(): void {
+  if (state.targetFolder.files.length === 0) {
+    showToast("Keine Dateien im Zielordner.");
+    return;
+  }
+
+  state = {
+    ...state,
+    targetFolder: {
+      ...state.targetFolder,
+      files: state.targetFolder.files.map((file) => ({ ...file, selected: false })),
+    },
+  };
+  render();
+  focusFileList();
+}
+
+function invertTargetFileSelection(): void {
+  if (state.targetFolder.files.length === 0) {
+    showToast("Keine Dateien im Zielordner.");
+    return;
+  }
+
+  state = {
+    ...state,
+    targetFolder: {
+      ...state.targetFolder,
+      files: state.targetFolder.files.map((file) => ({ ...file, selected: !file.selected })),
+    },
+  };
+  render();
+  focusFileList();
+}
+
+function selectNewestTargetFile(): void {
+  const newestIndex = state.targetFolder.files.reduce((newest, file, index, files) => (
+    file.modifiedAt > files[newest].modifiedAt ? index : newest
+  ), 0);
+
+  selectTargetFileAt(newestIndex);
+}
+
+function selectTargetFileAt(index: number): void {
+  if (state.targetFolder.files.length === 0) {
+    showToast("Keine Dateien im Zielordner.");
+    return;
+  }
+
+  const boundedIndex = Math.max(0, Math.min(index, state.targetFolder.files.length - 1));
+
+  state = {
+    ...state,
+    targetFolder: {
+      ...state.targetFolder,
+      files: state.targetFolder.files.map((file, fileIndex) => ({ ...file, selected: fileIndex === boundedIndex })),
+    },
+  };
+  render();
+  focusFileList();
+  scrollSelectedFileIntoView();
+}
+
+function moveTargetFileSelection(direction: -1 | 1): void {
+  if (state.targetFolder.files.length === 0) {
+    showToast("Keine Dateien im Zielordner.");
+    return;
+  }
+
+  const selectedIndex = state.targetFolder.files.findIndex((file) => file.selected);
+  const currentIndex = selectedIndex >= 0 ? selectedIndex : 0;
+  selectTargetFileAt(currentIndex + direction);
 }
 
 function updateTargetFileSelection(fileId: string, selected: boolean): void {
@@ -482,6 +856,36 @@ function updateTargetFileSelection(fileId: string, selected: boolean): void {
     },
   };
 }
+
+function focusLinkInput(): void {
+  document.querySelector<HTMLInputElement>("#download-link")?.focus();
+}
+
+function clearLinkInput(): void {
+  setCurrentLinkForNewWorkflow("", "Noch nicht analysiert");
+  focusLinkInput();
+}
+
+async function analyzeCurrentLinkOnly(): Promise<void> {
+  await analyzeLink(getCurrentLinkInputValue());
+}
+
+function isFileListFocused(): boolean {
+  const activeElement = document.activeElement;
+
+  return activeElement instanceof HTMLElement && Boolean(activeElement.closest("[data-file-list]"));
+}
+
+function focusFileList(): void {
+  document.querySelector<HTMLElement>("[data-file-list]")?.focus();
+}
+
+function scrollSelectedFileIntoView(): void {
+  document.querySelector(".file-row-selected")?.scrollIntoView({
+    block: "nearest",
+  });
+}
+
 
 function getCurrentLinkInputValue(): string {
   return document.querySelector<HTMLInputElement>("#download-link")?.value ?? state.linkInput;
@@ -983,6 +1387,24 @@ function createFallbackApi(): ElectronApi {
   return {
     getAppVersion: async () => "dev",
     readClipboardText: async () => navigator.clipboard?.readText?.() ?? "",
+    openHelpWindow: async () => {
+      window.open(`${window.location.pathname}?window=help`, "nelly-help");
+      return {
+        message: "Hilfe wurde im Browserfenster geoeffnet.",
+      };
+    },
+    openShortcutWindow: async () => {
+      window.open(`${window.location.pathname}?window=shortcuts`, "nelly-shortcuts");
+      return {
+        message: "Tastenkombinationen wurden im Browserfenster geoeffnet.",
+      };
+    },
+    closeCurrentWindow: async () => {
+      window.close();
+      return {
+        message: "Fenster wurde geschlossen.",
+      };
+    },
     getSettings: async () => memorySettings,
     saveSettings: async (settings) => {
       memorySettings = settings;
@@ -1038,5 +1460,6 @@ function createFallbackApi(): ElectronApi {
       message: "Der echte Download ist nur in der Electron-App verfuegbar.",
     }),
     onDownloadProgress: () => () => undefined,
+    onSettingsChanged: () => () => undefined,
   };
 }

@@ -5,6 +5,9 @@ import type { ElectronApi } from "../types/electronApi";
 const electronApi: ElectronApi = {
   getAppVersion: () => ipcRenderer.invoke("app:get-version"),
   readClipboardText: () => ipcRenderer.invoke("clipboard:read-text"),
+  openHelpWindow: () => ipcRenderer.invoke("window:open-help"),
+  openShortcutWindow: () => ipcRenderer.invoke("window:open-shortcuts"),
+  closeCurrentWindow: () => ipcRenderer.invoke("window:close-current"),
   getSettings: () => ipcRenderer.invoke("settings:get"),
   saveSettings: (settings: AppSettings) => ipcRenderer.invoke("settings:save", settings),
   selectTargetFolder: () => ipcRenderer.invoke("folder:select-target"),
@@ -27,6 +30,17 @@ const electronApi: ElectronApi = {
 
     return () => {
       ipcRenderer.removeListener("download:progress", listener);
+    };
+  },
+  onSettingsChanged: (callback: (settings: AppSettings) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, settings: AppSettings) => {
+      callback(settings);
+    };
+
+    ipcRenderer.on("settings:changed", listener);
+
+    return () => {
+      ipcRenderer.removeListener("settings:changed", listener);
     };
   },
 };

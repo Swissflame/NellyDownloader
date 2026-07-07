@@ -1,6 +1,5 @@
 import { renderAboutPanel } from "./aboutPanel";
 import { renderDialog } from "./dialog";
-import { renderHelpPanel } from "./helpPanel";
 import { renderLinkDetails } from "./linkDetails";
 import { bindLinkInput, renderLinkInput } from "./linkInput";
 import { renderProgressPanel } from "./progressPanel";
@@ -22,7 +21,6 @@ export function renderApp(state: AppState): string {
 
       ${renderTargetFolder(state.targetFolder, state.settings.targetFolder)}
       ${renderSettingsPanel(state.settings, state.settingsVisible)}
-      ${renderHelpPanel(state.helpVisible, state.helpSearch)}
       ${renderAboutPanel(state.aboutVisible, state.appVersion)}
       ${renderDialog()}
     </main>

@@ -89,8 +89,9 @@ export const helpChapters: HelpChapter[] = [
     title: "Tastenkombinationen",
     body: [
       "Shortcuts funktionieren, wenn NellyDownloader aktiv ist.",
+      "Es werden keine globalen Windows-Hotkeys registriert.",
       "Normale Texteingaben werden geschuetzt: Ctrl+A markiert im Linkfeld weiter Text und Delete wirkt nicht im Linkfeld.",
-      "Logitech-Tasten oder andere externe Bediengeraete koennen auf diese Tastenkombinationen gelegt werden.",
+      "Die Standardbelegung ist unten aufgelistet und kann im eigenen Tastenkombinationen-Fenster angepasst werden.",
     ],
     keywords: ["shortcut", "tastenkombination", "logitech", "f1", "delete"],
     table: {
@@ -100,6 +101,41 @@ export const helpChapters: HelpChapter[] = [
         shortcut.label,
       ]),
     },
+  },
+  {
+    id: "keyboard-editing",
+    title: "Tastenkombinationen bearbeiten",
+    body: [
+      "Oeffne Einstellungen und waehle Tastenkombinationen bearbeiten.",
+      "Mit Aendern wartet NellyDownloader auf die naechste Tastenkombination. Esc bricht die Aufnahme ab.",
+      "Konflikte werden angezeigt und nicht still ueberschrieben.",
+      "Einzelne normale Buchstaben ohne Ctrl oder Alt werden abgelehnt, damit Texteingaben nicht gestoert werden.",
+      "Geaenderte Shortcuts werden in den AppSettings im lokalen App-Datenordner gespeichert.",
+    ],
+    keywords: ["shortcuts bearbeiten", "konflikt", "speichern", "zuruecksetzen"],
+  },
+  {
+    id: "logitech-keypad",
+    title: "Logitech MX Creative Keypad / Dial Pad",
+    body: [
+      "Logitech-Tasten oder andere externe Bediengeraete koennen normale Tastenkombinationen an NellyDownloader senden.",
+      "Lege im Logitech-Profil z.B. Ctrl+Shift+V fuer Link aus Zwischenablage uebernehmen oder Ctrl+Shift+N fuer neueste Datei auswaehlen fest.",
+      "Die Shortcuts wirken nur, wenn NellyDownloader aktiv ist. Es sind keine globalen Hotkeys.",
+      "Fuer Viber bleibt der Explorer-Workflow sinnvoll: Datei im Explorer anzeigen und per Drag & Drop in Viber ziehen.",
+    ],
+    keywords: ["logitech", "mx creative", "dial pad", "keypad", "viber"],
+  },
+  {
+    id: "keyboard-file-selection",
+    title: "Dateiauswahl per Tastatur",
+    body: [
+      "Die Dateiliste kann fokussiert werden und zeigt ausgewaehlte Zeilen sichtbar an.",
+      "Ctrl+A waehlt alle Dateien, wenn kein Textfeld fokussiert ist. Ctrl+Shift+A waehlt alle ab.",
+      "Ctrl+Alt+A invertiert die Auswahl. Ctrl+Shift+N waehlt die zuletzt geaenderte Datei.",
+      "Home, End, ArrowUp und ArrowDown bewegen die Auswahl, wenn die Dateiliste fokussiert ist.",
+      "Checkbox-Auswahl und Tastaturauswahl arbeiten auf derselben Auswahl.",
+    ],
+    keywords: ["dateiauswahl", "tastatur", "alle auswaehlen", "neueste datei", "invertieren"],
   },
   {
     id: "whatsapp",

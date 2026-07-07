@@ -43,6 +43,9 @@ export type AnalyzeLinkResult = LinkDetails & {
 export type ElectronApi = {
   getAppVersion: () => Promise<string>;
   readClipboardText: () => Promise<string>;
+  openHelpWindow: () => Promise<PlaceholderResult>;
+  openShortcutWindow: () => Promise<PlaceholderResult>;
+  closeCurrentWindow: () => Promise<PlaceholderResult>;
   getSettings: () => Promise<AppSettings>;
   saveSettings: (settings: AppSettings) => Promise<SaveSettingsResult>;
   selectTargetFolder: () => Promise<SelectTargetFolderResult>;
@@ -54,4 +57,5 @@ export type ElectronApi = {
   analyzeLink: (url: string) => Promise<AnalyzeLinkResult>;
   startDownload: (url: string) => Promise<StartDownloadResult>;
   onDownloadProgress: (callback: (event: DownloadProgressEvent) => void) => () => void;
+  onSettingsChanged: (callback: (settings: AppSettings) => void) => () => void;
 };

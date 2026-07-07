@@ -27,19 +27,21 @@ Aufgaben:
 - Fortschrittsbalken anzeigen
 - Zielordner-Dateiliste anzeigen
 - Einstellungen anzeigen
-- Hilfe anzeigen
+- Hilfe als eigenes Fenster anzeigen
 
 Die UI enthaelt moeglichst wenig Business-Logik. Komponenten liegen unter `src/components`, zentrale Typen unter `src/types`, Standardwerte unter `src/config`.
 
 ## Hilfe / Benutzerhandbuch
 
-Der Hilfe-Bereich ist ein durchsuchbares Handbuch im Renderer. Die Inhalte werden in `src/data/helpContent.ts` gepflegt und von `src/components/helpPanel.ts` gerendert.
+Der Hilfe-Bereich ist ein eigenes Electron-Fenster. Die Inhalte werden in `src/data/helpContent.ts` gepflegt und von `src/components/helpPanel.ts` gerendert.
 
-Die Suche filtert Kapitel nach Titel, Text und Stichworten. Treffer werden im sichtbaren Text markiert. Wenn kein Kapitel passt, zeigt die UI eine freundliche Leermeldung.
+Das Hauptfenster oeffnet Hilfe ueber die Preload-API im Main-Prozess. Wenn das Hilfe-Fenster bereits offen ist, wird es fokussiert. Die Suche filtert Kapitel nach Titel, Text und Stichworten. Treffer werden im sichtbaren Text markiert. Wenn kein Kapitel passt, zeigt die UI eine freundliche Leermeldung.
 
 ## Tastenkombinationen
 
-App-interne Tastenkombinationen werden im Renderer ueber einen zentralen Keydown-Dispatcher verarbeitet. Die Belegung liegt in `src/config/shortcuts.ts` und wird als `keyboardShortcuts` in `AppSettings` vorbereitet.
+App-interne Tastenkombinationen werden im Renderer ueber einen zentralen Keydown-Dispatcher verarbeitet. Die Standardbelegung liegt in `src/config/shortcuts.ts` und wird als `keyboardShortcuts` in `AppSettings` gespeichert.
+
+Die Bearbeitung laeuft in einem eigenen Electron-Fenster. Dort koennen Kombinationen geaendert, entfernt, einzeln zurueckgesetzt oder komplett auf Standardwerte gesetzt werden. Konflikte werden blockiert und nicht still ueberschrieben.
 
 Shortcuts loesen bestehende Funktionen aus:
 
@@ -47,18 +49,24 @@ Shortcuts loesen bestehende Funktionen aus:
 - Ctrl+Shift+V nutzt denselben Ablauf wie Rechtsklick auf den Download-Button
 - F5 aktualisiert den Zielordner
 - Ctrl+, oeffnet Einstellungen
-- F1 oeffnet Hilfe
+- F1 oeffnet das Hilfe-Fenster
 - Ctrl+I oeffnet Info
 - Ctrl+Shift+C nutzt die bestehende Kopierfunktion
 - Delete nutzt die bestehende Papierkorb-Funktion mit Sicherheitsabfrage
 - Esc schliesst offene Dialoge
 - Ctrl+A waehlt Dateien nur aus, wenn keine Texteingabe fokussiert ist
+- Ctrl+Shift+A waehlt Dateien ab
+- Ctrl+Alt+A invertiert die Dateiauswahl
+- Ctrl+Shift+N waehlt die neueste Datei
+- Home, End, ArrowUp und ArrowDown bewegen die Auswahl, wenn die Dateiliste fokussiert ist
 
-Normale Texteingaben werden geschuetzt. Dadurch koennen externe Bediengeraete wie Logitech-Tasten auf diese Kombinationen gelegt werden, ohne neue Datei- oder Downloadlogik einzufuehren.
+Normale Texteingaben werden geschuetzt. Dadurch koennen externe Bediengeraete wie Logitech-Tasten auf diese Kombinationen gelegt werden, ohne neue Datei- oder Downloadlogik einzufuehren. Es werden keine globalen Windows-Hotkeys registriert.
 
 ## Zielordner-Layout
 
 Der Zielordnerbereich bleibt Teil des Renderers. Die Dateiliste selbst hat eine eigene Maximalhoehe und scrollt intern, damit Link, Analyse, Fortschritt und Dateiaktions-Buttons moeglichst sichtbar bleiben.
+
+Die Dateiliste kann Fokus erhalten. Checkbox-Auswahl und Tastaturauswahl schreiben in denselben Renderer-State, sodass Kopieren, Papierkorb und Explorer-Anzeigen die gleiche Auswahl verwenden.
 
 ## Assets und Grafiken
 
@@ -133,6 +141,9 @@ API-Methoden:
 
 - `getAppVersion()`
 - `readClipboardText()`
+- `openHelpWindow()`
+- `openShortcutWindow()`
+- `closeCurrentWindow()`
 - `getSettings()`
 - `saveSettings(settings)`
 - `selectTargetFolder()`
@@ -141,8 +152,9 @@ API-Methoden:
 - `deleteSelectedFiles(fileIds)`
 - `analyzeLink(url)`
 - `startDownload(url)`
+- `onSettingsChanged(callback)`
 
-`getSettings`, `saveSettings`, `selectTargetFolder`, `listTargetFolder`, `analyzeLink`, `startDownload`, `copySelectedFiles` und `deleteSelectedFiles` arbeiten bereits lokal.
+`getSettings`, `saveSettings`, `selectTargetFolder`, `listTargetFolder`, `analyzeLink`, `startDownload`, `copySelectedFiles`, `deleteSelectedFiles` und die Fensterfunktionen arbeiten bereits lokal.
 
 ## Link-Analyse
 
@@ -296,6 +308,8 @@ Aktueller Speicherort:
 - Datei: `settings.json`
 
 Beim ersten Start werden Standardwerte verwendet. Danach wird der gewaehlt Zielordner persistent in der Settings-Datei gespeichert.
+
+Auch die frei zugeordneten Tastenkombinationen werden dort gespeichert. Wenn Eintraege fehlen, werden sie beim Laden mit den Standardwerten aus `src/config/shortcuts.ts` aufgefuellt.
 
 Geplante Tool- und Temp-Speicherorte:
 

@@ -7,6 +7,22 @@ export function renderHelpPanel(visible: boolean, searchQuery: string): string {
     return "";
   }
 
+  return `
+    <div class="settings-backdrop" data-help-panel>
+      ${renderHelpContent(searchQuery, "panel compact-panel help-panel", false)}
+    </div>
+  `;
+}
+
+export function renderHelpWindow(searchQuery: string): string {
+  return `
+    <main class="standalone-window help-window-shell" data-help-panel>
+      ${renderHelpContent(searchQuery, "panel help-window-panel", true)}
+    </main>
+  `;
+}
+
+function renderHelpContent(searchQuery: string, panelClass: string, closeWithWindow: boolean): string {
   const normalizedQuery = searchQuery.trim().toLowerCase();
   const visibleChapters = normalizedQuery
     ? helpChapters.filter((chapter) => chapterMatches(chapter, normalizedQuery))
@@ -22,14 +38,13 @@ export function renderHelpPanel(visible: boolean, searchQuery: string): string {
     : `<div class="folder-message">Keine passenden Hilfethemen gefunden. Versuche ein anderes Stichwort.</div>`;
 
   return `
-    <div class="settings-backdrop" data-help-panel>
-      <section class="panel compact-panel help-panel" aria-labelledby="help-heading" role="dialog" aria-modal="true">
+      <section class="${panelClass}" aria-labelledby="help-heading" role="dialog" aria-modal="true">
         <div class="panel-heading">
           <div>
             <p class="eyebrow">Handbuch</p>
             <h2 id="help-heading">Hilfe</h2>
           </div>
-          <button class="ghost-button" type="button" data-action="close-help">Schliessen</button>
+          <button class="ghost-button" type="button" data-action="${closeWithWindow ? "close-window" : "close-help"}">Schliessen</button>
         </div>
         <div class="help-hero">
           <img src="${UI_ASSETS.helpBanner}" alt="" />
@@ -50,7 +65,6 @@ export function renderHelpPanel(visible: boolean, searchQuery: string): string {
           </div>
         </div>
       </section>
-    </div>
   `;
 }
 

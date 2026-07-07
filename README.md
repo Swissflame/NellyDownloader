@@ -17,8 +17,9 @@ NellyDownloader ist eine lokale Electron-App zum Analysieren, Herunterladen und 
 - optionales Verschieben der Originaldatei in den Papierkorb nach erfolgreicher Umwandlung
 - Kopieren ausgewaehlter Dateien in die System-Zwischenablage
 - sicheres Verschieben ausgewaehlter Dateien in den Papierkorb
-- durchsuchbares Benutzerhandbuch und Info-Dialog
-- app-interne Tastenkombinationen, geeignet fuer externe Bediengeraete wie Logitech-Tasten
+- durchsuchbares Benutzerhandbuch als eigenes Hilfe-Fenster und Info-Dialog
+- frei zuordenbare app-interne Tastenkombinationen, geeignet fuer externe Bediengeraete wie Logitech-Tasten
+- Tastaturfunktionen fuer die Dateiliste: auswaehlen, abwaehlen, invertieren, neueste Datei und Bewegung
 
 ## Sicherheit
 
@@ -31,9 +32,9 @@ NellyDownloader ist eine lokale Electron-App zum Analysieren, Herunterladen und 
 
 ## Entwicklungsstand
 
-Die Desktop-App ist funktionsfaehig fuer Analyse, Einzel-Download, Zielordner, Kopieren, Papierkorb und Hilfe. Icons und UI-Grafiken sind eingebunden. Ein Windows-Installer kann mit electron-builder erzeugt werden.
+Die Desktop-App ist funktionsfaehig fuer Analyse, Einzel-Download, Zielordner, Kopieren, Papierkorb, Explorer-Funktionen, Hilfe und konfigurierbare Tastenkombinationen. Icons und UI-Grafiken sind eingebunden. Ein Windows-Installer kann mit electron-builder erzeugt werden.
 
-Die Tastenkombinationen sind mit Standardbelegung vorbereitet und in den Einstellungen sichtbar. Freie Bearbeitung der Belegung folgt spaeter.
+Die Tastenkombinationen werden in `settings.json` im lokalen Electron-App-Datenordner gespeichert. Es werden keine globalen Windows-Hotkeys registriert; Shortcuts funktionieren nur, wenn NellyDownloader aktiv ist.
 
 Aktueller Entwicklungsstand: Der Windows-Installer nimmt `yt-dlp.exe`, `ffmpeg.exe` und `ffprobe.exe` aus `reference/Windows` als lokale Ressourcen auf. Diese Dateien bleiben im Git ignoriert. In der Entwicklungsfassung werden gespeicherte Tool-Pfade, `reference/Windows` und danach der `PATH` geprueft.
 

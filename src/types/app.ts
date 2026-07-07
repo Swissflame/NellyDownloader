@@ -27,6 +27,7 @@ export type OutputFile = {
   name: string;
   size: string;
   date: string;
+  modifiedAt: number;
   type: string;
   selected: boolean;
 };
@@ -53,7 +54,18 @@ export type ShortcutAction =
   | "copySelectedFiles"
   | "deleteSelectedFiles"
   | "closeDialog"
-  | "selectAllFiles";
+  | "focusLinkInput"
+  | "clearLinkInput"
+  | "analyzeCurrentLink"
+  | "openTargetFolderSettings"
+  | "selectAllFiles"
+  | "deselectAllFiles"
+  | "invertFileSelection"
+  | "selectNewestFile"
+  | "selectFirstFile"
+  | "selectLastFile"
+  | "moveSelectionUp"
+  | "moveSelectionDown";
 export type KeyboardShortcuts = Record<ShortcutAction, string>;
 
 export type AppSettings = {

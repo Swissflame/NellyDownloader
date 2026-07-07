@@ -21,7 +21,7 @@ export function renderTargetFolder(folderState: TargetFolderState, targetFolder:
         </div>
       </div>
       <div class="folder-path">${escapeHtml(targetFolder)}</div>
-      <div class="${fileListClass}" role="list" aria-label="Dateien im Zielordner">
+      <div class="${fileListClass}" role="list" aria-label="Dateien im Zielordner" tabindex="0" data-file-list>
         ${fileContent}
       </div>
       <div class="file-actions">
@@ -50,9 +50,10 @@ function emptyFolderMessage(folderState: TargetFolderState): string {
 
 function fileRow(file: OutputFile): string {
   const checked = file.selected ? "checked" : "";
+  const selectedClass = file.selected ? " file-row-selected" : "";
 
   return `
-    <label class="file-row" role="listitem">
+    <label class="file-row${selectedClass}" role="listitem" data-file-row="${escapeHtml(file.id)}">
       <input type="checkbox" ${checked} data-file-id="${escapeHtml(file.id)}" />
       <span class="file-name">${escapeHtml(file.name)}</span>
       <span>${escapeHtml(file.size)}</span>
