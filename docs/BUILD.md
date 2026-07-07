@@ -48,6 +48,15 @@ Der NSIS-Installer wird unter `src/release/` erzeugt. Der Ordner ist in `.gitign
 
 Der Installer heisst nach erfolgreichem Build z.B. `NellyDownloader-Setup-0.1.0.exe`.
 
+Nicht committen:
+
+- `src/node_modules/`
+- `src/dist/`
+- `src/dist-electron/`
+- `src/release/`
+- `out/`
+- erzeugte Installer-EXE- und Blockmap-Dateien
+
 Verwendete Installer-Assets:
 
 - App-Icon: `assets/icons/app-icon.ico`
@@ -68,3 +77,19 @@ Sie werden beim Build als Ressourcen in den Installer aufgenommen und liegen in 
 Im Dev-Modus greift die App weiterhin auf gespeicherte Tool-Pfade, `reference/Windows` oder den `PATH` zurueck.
 
 Der Installer laeuft als assistierter NSIS-Installer: Benutzer koennen den Installationspfad waehlen, NellyDownloader wird als Startmenue- und Desktop-Verknuepfung angelegt, und die App kann am Ende der Installation direkt gestartet werden. Beim Deinstallieren werden Programmdateien entfernt; lokale Benutzereinstellungen im App-Datenordner werden nicht automatisch geloescht.
+
+## Release-Kandidat 0.1.0 pruefen
+
+Vor einem Release-Kandidaten sollten diese Befehle erfolgreich laufen:
+
+```powershell
+cd src
+npm run build
+npm run dev
+npm run dev:electron
+npm run dist:win
+```
+
+`npm run dev` laeuft dauerhaft als Devserver und kann nach erfolgreichem Browser-Test beendet werden.
+
+Nach `npm run dist:win` liegt der Installer unter `src/release/NellyDownloader-Setup-0.1.0.exe`.
